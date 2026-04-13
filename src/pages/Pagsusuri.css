@@ -1,0 +1,536 @@
+/* ═══════════════════════════════════════════════════════════════
+   Pagsusuri.css  —  Reviews page, gold / crimson editorial theme
+   Fonts: Bebas Neue (display), Playfair Display (headings),
+          Crimson Text (body / review text)
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap');
+
+/* ── Tokens ──────────────────────────────────────────────────── */
+:root {
+  --gold:    #f5c518;
+  --gold-dk: #c9a200;
+  --gold-xl: rgba(245,197,24,0.10);
+  --gold-sm: rgba(245,197,24,0.22);
+  --red:     #bf1e2e;
+  --red-sm:  rgba(191,30,46,0.14);
+  --red-md:  rgba(191,30,46,0.32);
+  --cream:   #f0ece4;
+  --ink:     #0c0c0e;
+}
+
+/* ── Page shell ─────────────────────────────────────────────── */
+.pag-page {
+  position: relative;
+  min-height: 100vh;
+  background: var(--ink);
+  padding: 5rem 0 4rem;
+  overflow-x: hidden;
+  font-family: 'Crimson Text', Georgia, serif;
+}
+
+.pag-page__texture {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(245,197,24,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(191,30,46,0.05) 0%, transparent 45%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+.pag-page__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── Back button ────────────────────────────────────────────── */
+.pag-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: none;
+  border: 1px solid rgba(240,236,228,0.1);
+  color: rgba(240,236,228,0.45);
+  font-family: 'Crimson Text', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-bottom: 3rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+.pag-back:hover {
+  border-color: var(--gold-dk);
+  color: var(--cream);
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.pag-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.pag-header--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pag-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.pag-eyebrow__line {
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  background: rgba(201,162,0,0.45);
+}
+.pag-eyebrow__text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-dk);
+}
+
+.pag-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+.pag-heading__white { color: var(--cream); }
+.pag-heading__gold  { color: var(--gold); font-style: italic; }
+
+.pag-subheading {
+  font-family: 'Crimson Text', serif;
+  color: rgba(240,236,228,0.42);
+  font-size: 1.05rem;
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.7;
+  font-style: italic;
+}
+
+/* ── Filter pills ───────────────────────────────────────────── */
+.pag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.pag-pill {
+  padding: 0.38rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(240,236,228,0.1);
+  background: transparent;
+  color: rgba(240,236,228,0.42);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.pag-pill:hover {
+  border-color: var(--gold-sm);
+  color: var(--cream);
+}
+.pag-pill--active {
+  background: var(--gold-xl);
+  border-color: var(--gold-dk);
+  color: var(--gold);
+}
+
+/* ── Loading ─────────────────────────────────────────────────── */
+.pag-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 5rem 0;
+  color: rgba(240,236,228,0.32);
+  font-family: 'Crimson Text', serif;
+  font-size: 1.05rem;
+  font-style: italic;
+}
+.pag-loading__spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(245,197,24,0.18);
+  border-top-color: var(--gold-dk);
+  border-radius: 50%;
+  animation: pag-spin 0.75s linear infinite;
+}
+@keyframes pag-spin { to { transform: rotate(360deg); } }
+
+/* ── Cards grid ─────────────────────────────────────────────── */
+.pag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── Review Card ─────────────────────────────────────────────── */
+.pag-card {
+  position: relative;
+  background: #151518;
+  border: 1px solid rgba(240,236,228,0.07);
+  border-radius: 14px;
+  padding: 1.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.5s ease calc(var(--i) * 0.07s),
+    transform 0.5s ease calc(var(--i) * 0.07s),
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.pag-card--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pag-card:hover {
+  border-color: rgba(201,162,0,0.28);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(245,197,24,0.10);
+}
+
+/* Glow */
+.pag-card__glow {
+  position: absolute;
+  top: -40%; left: -20%;
+  width: 140%; height: 220%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,162,0,0.07) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+.pag-card:hover .pag-card__glow { opacity: 1; }
+
+/* ── Card top row: cover + meta ──────────────────────────────── */
+.pag-card__top {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+/* Cover thumbnail */
+.pag-card__cover-wrap {
+  position: relative;
+  width: 60px;
+  height: 84px;
+  border-radius: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.55);
+  background: #1e1e24;
+}
+.pag-card__cover-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pag-card__cover-fallback {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1e1e24, #1f1a10);
+}
+.pag-card__cover-fallback span {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgba(201,162,0,0.30);
+  line-height: 1;
+}
+
+/* Book info beside cover */
+.pag-card__bookinfo {
+  flex: 1;
+  min-width: 0;
+}
+.pag-card__genre {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--gold-dk);
+  background: var(--gold-xl);
+  padding: 0.16rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 0.35rem;
+}
+.pag-card__booktitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cream);
+  margin: 0 0 0.18rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pag-card__author {
+  font-family: 'Crimson Text', serif;
+  font-size: 0.8rem;
+  color: rgba(240,236,228,0.36);
+  margin: 0 0 0.5rem;
+  font-style: italic;
+}
+
+/* Star rating */
+.pag-card__stars {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.pag-star {
+  width: 13px;
+  height: 13px;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: rgba(240,236,228,0.12);
+  transition: background 0.15s;
+}
+.pag-star--filled {
+  background: var(--gold);
+}
+.pag-star--half {
+  background: linear-gradient(90deg, var(--gold) 50%, rgba(240,236,228,0.12) 50%);
+}
+.pag-card__rating-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(240,236,228,0.35);
+  letter-spacing: 0.08em;
+  margin-left: 0.3rem;
+}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.pag-card__divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(240,236,228,0.06);
+}
+
+/* ── Review body ────────────────────────────────────────────── */
+.pag-card__body {
+  flex: 1;
+}
+.pag-card__quote-mark {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.4rem;
+  line-height: 0.8;
+  color: rgba(201,162,0,0.25);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.pag-card__review-text {
+  font-family: 'Crimson Text', serif;
+  font-size: 1rem;
+  line-height: 1.72;
+  color: rgba(240,236,228,0.62);
+  font-style: italic;
+  margin: 0;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pag-card__review-text--expanded {
+  -webkit-line-clamp: unset;
+}
+
+/* Read more / less toggle */
+.pag-card__toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.45rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--gold-dk);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.pag-card__toggle:hover { color: var(--gold); }
+
+/* ── Footer: reviewer info ──────────────────────────────────── */
+.pag-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.pag-card__reviewer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pag-card__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1f1a10, #2a1f0a);
+  border: 1px solid rgba(201,162,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pag-card__avatar span {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-dk);
+}
+.pag-card__reviewer-name {
+  font-family: 'Crimson Text', serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(240,236,228,0.55);
+}
+.pag-card__date {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: rgba(240,236,228,0.22);
+}
+
+/* ── Verdict badge ──────────────────────────────────────────── */
+.pag-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.pag-verdict--recommended {
+  background: var(--gold-xl);
+  border: 1px solid rgba(201,162,0,0.3);
+  color: var(--gold-dk);
+}
+.pag-verdict--mixed {
+  background: rgba(191,30,46,0.08);
+  border: 1px solid rgba(191,30,46,0.25);
+  color: #e05060;
+}
+.pag-verdict__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Featured / wide card ───────────────────────────────────── */
+.pag-card--featured {
+  border-color: rgba(201,162,0,0.18);
+  background: #18160e;
+}
+.pag-card--featured::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dk), transparent);
+}
+
+/* ── Sort bar ────────────────────────────────────────────────── */
+.pag-sortbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.pag-sortbar__count {
+  font-family: 'Crimson Text', serif;
+  font-size: 0.9rem;
+  color: rgba(240,236,228,0.3);
+  font-style: italic;
+}
+.pag-sortbar__count strong {
+  font-style: normal;
+  font-weight: 600;
+  color: rgba(240,236,228,0.55);
+}
+.pag-sort-select {
+  appearance: none;
+  background: #151518;
+  border: 1px solid rgba(240,236,228,0.1);
+  border-radius: 8px;
+  padding: 0.38rem 2rem 0.38rem 0.85rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: rgba(240,236,228,0.5);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9a200' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  transition: border-color 0.2s, color 0.2s;
+}
+.pag-sort-select:hover {
+  border-color: var(--gold-dk);
+  color: var(--cream);
+}
+
+/* ── Bottom rule ────────────────────────────────────────────── */
+.pag-rule {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.pag-rule span:not(.pag-rule__diamond) {
+  flex: 1;
+  height: 1px;
+  background: rgba(240,236,228,0.07);
+}
+.pag-rule__diamond {
+  width: 6px; height: 6px;
+  background: var(--gold-dk);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .pag-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .pag-page { padding: 3.5rem 0 3rem; }
+}

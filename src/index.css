@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700;800&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+ 
+/* ── Variables ────────────────────────────────────────────────── */
+:root {
+  --gold:    #f5c518;
+  --gold-dk: #c9a200;
+  --red:     #bf1e2e;
+  --black:   #0d0d0d;
+  --dark:    #111;
+  --dark2:   #181818;
+  --border:  #2a2a2a;
+  --text:    #e4dccf;
+  --muted:   #7a7060;
+ 
+  /* Fluid spacing scale */
+  --space-xs:  clamp(0.5rem,  1vw,  0.75rem);
+  --space-sm:  clamp(0.75rem, 2vw,  1.25rem);
+  --space-md:  clamp(1rem,    3vw,  2rem);
+  --space-lg:  clamp(1.5rem,  4vw,  3rem);
+  --space-xl:  clamp(2rem,    5vw,  4rem);
+ 
+  /* Fluid type scale */
+  --text-xs:   clamp(0.65rem,  1vw,   0.78rem);
+  --text-sm:   clamp(0.8rem,   1.5vw, 1rem);
+  --text-md:   clamp(1rem,     2vw,   1.15rem);
+  --text-lg:   clamp(1.5rem,   3vw,   2rem);
+  --text-hero: clamp(2.8rem,   7vw,   5.5rem);
+}
+ 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+body {
+  background: var(--black);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}

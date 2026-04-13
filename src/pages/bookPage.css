@@ -1,0 +1,110 @@
+:root {
+  --gold:       #f5c518;
+  --gold-mid:   rgba(245, 197, 24, 0.22);
+  --gold-dim:   rgba(245, 197, 24, 0.10);
+  --dark:       #0f0e0b;
+  --text-muted: rgba(232, 224, 204, 0.52);
+  --rule:       rgba(245, 197, 24, 0.14);
+}
+
+/* Page */
+.bp-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--dark);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.bp-page--in { opacity: 1; }
+
+/* Back button */
+.bp-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  margin: 1.2rem 1.5rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 7px 14px 7px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.16s, border-color 0.16s, background 0.16s;
+}
+.bp-back:hover {
+  color: var(--gold);
+  border-color: var(--gold-mid);
+  background: var(--gold-dim);
+}
+
+/* PDF iframe — fills remaining height */
+.bp-pdf-viewer {
+  flex: 1;
+  width: 100%;
+  border: none;
+  display: block;
+}
+
+/* No PDF */
+.bp-no-pdf {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+/* Not found */
+.bp-notfound {
+  min-height: 100vh;
+  background: var(--dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  font-family: 'Crimson Text', serif;
+  color: var(--text-muted);
+}
+.bp-notfound button {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: none;
+  border: 1px solid var(--gold-mid);
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.16s;
+}
+.bp-notfound button:hover { background: var(--gold-dim); }
+
+
+.bp-download-link {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-decoration: none;
+  border: 1px solid var(--gold-mid);
+  padding: 10px 20px;
+  border-radius: 2px;
+  transition: background 0.16s;
+  display: inline-block;
+  margin-top: 1rem;
+}
+.bp-download-link:hover { background: var(--gold-dim); }

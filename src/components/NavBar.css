@@ -1,0 +1,465 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Barlow+Condensed:wght@600;700&family=Crimson+Text:wght@600&display=swap');
+
+:root {
+  --gold:       #f5c518;
+  --gold-dim:   rgba(245, 197, 24, 0.12);
+  --gold-glow:  rgba(245, 197, 24, 0.25);
+  --black:      #0d0d0d;
+  --dark:       #111;
+  --text:       #e8e0cc;
+  --text-muted: rgba(232, 224, 204, 0.55);
+  --border-sub: rgba(245, 197, 24, 0.18);
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--black);
+  border-bottom: 1.5px solid var(--gold);
+}
+
+.navbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.navbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* ── Logo ─────────────────────────────────────────────────── */
+.navbar-logo {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.navbar-logo:hover {
+  opacity: 0.85;
+}
+
+.logo-line1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.75;
+}
+
+.logo-line2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(245, 197, 24, 0.3);
+}
+
+/* ── Desktop links ────────────────────────────────────────── */
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  font-family: 'Crimson Text', serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  position: relative;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.navbar-link::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  right: 50%;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0;
+  transition: left 0.2s, right 0.2s, opacity 0.2s;
+}
+
+.navbar-link:hover {
+  color: var(--text);
+  background: var(--gold-dim);
+  border-color: var(--border-sub);
+}
+
+.navbar-link:hover::after {
+  left: 14px;
+  right: 14px;
+  opacity: 0.6;
+}
+
+/* Active state */
+.navbar-link--active {
+  background: linear-gradient(180deg, #ffc84e 0%, #f9f5a0 50%, #ffc84e 100%);
+  color: #8a0a0f;
+  border-color: #c9913a;
+  padding: 0.26rem 0.65rem;
+  font-size: 0.84rem;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 1px 8px rgba(249, 195, 77, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.navbar-link--active::after {
+  display: none;
+}
+
+.navbar-link--active:hover {
+  color: #8a0a0f;
+  background: linear-gradient(180deg, #ffd060 0%, #f9f5b5 50%, #ffd060 100%);
+}
+
+/* ── Actions wrapper ──────────────────────────────────────── */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Magsuri Tayo Tooltip Button ─────────────────────────── */
+.magsuri-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.magsuri-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(245, 197, 24, 0.06);
+  border: 1px solid var(--border-sub);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.magsuri-btn:hover {
+  background: var(--gold-dim);
+  border-color: rgba(245, 197, 24, 0.4);
+  transform: scale(1.08);
+}
+
+.magsuri-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+  filter: brightness(0) saturate(100%) invert(85%) sepia(40%)
+          saturate(600%) hue-rotate(5deg) brightness(105%);
+  transition: opacity 0.2s;
+}
+
+.magsuri-btn:hover .magsuri-icon {
+  opacity: 1;
+}
+
+/* Tooltip bubble */
+.magsuri-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #1a1a0f;
+  border: 1px solid rgba(245, 197, 24, 0.3);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(245, 197, 24, 0.08);
+  z-index: 200;
+}
+
+/* Arrow caret */
+.magsuri-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #1a1a0f;
+  border-left: 1px solid rgba(245, 197, 24, 0.3);
+  border-top: 1px solid rgba(245, 197, 24, 0.3);
+}
+
+.magsuri-wrapper:hover .magsuri-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.magsuri-tooltip-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.magsuri-tooltip-sub {
+  font-family: 'Crimson Text', serif;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── Profile button ───────────────────────────────────────── */
+.navbar-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.8rem 0.28rem 0.6rem;
+  background: rgba(245, 197, 24, 0.06);
+  border: 1px solid var(--border-sub);
+  border-radius: 99px;
+  cursor: pointer;
+  font-family: 'Crimson Text', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.navbar-profile:hover {
+  color: var(--gold);
+  background: var(--gold-dim);
+  border-color: rgba(245, 197, 24, 0.4);
+}
+
+.navbar-profile-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.navbar-profile:hover .navbar-profile-icon {
+  opacity: 1;
+}
+
+/* ── Logged-in profile pill variant ──────────────────────── */
+.navbar-profile--loggedin {
+  color: var(--gold);
+  border-color: rgba(245, 197, 24, 0.35);
+  background: rgba(245, 197, 24, 0.08);
+}
+
+.navbar-profile--loggedin .navbar-profile-icon {
+  opacity: 1;
+}
+
+.navbar-profile--loggedin:hover {
+  background: rgba(245, 197, 24, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Username label responsive truncation ─────────────────── */
+.navbar-profile-label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Thin divider between links and actions */
+.navbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(245, 197, 24, 0.15);
+}
+
+/* ── Hamburger ────────────────────────────────────────────── */
+.navbar-burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--border-sub);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 7px 8px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.navbar-burger:hover {
+  background: var(--gold-dim);
+  border-color: rgba(245, 197, 24, 0.4);
+}
+
+.navbar-burger span {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--gold);
+  transform-origin: center;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.navbar-burger.open span:nth-child(1) { transform: translateY(6.5px)  rotate(45deg); }
+.navbar-burger.open span:nth-child(2) { opacity: 0; }
+.navbar-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* ── Mobile menu ──────────────────────────────────────────── */
+.navbar-mobile {
+  display: none;
+  flex-direction: column;
+  background: #0f0f0f;
+  border-top: 1px solid rgba(245, 197, 24, 0.1);
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s ease;
+}
+
+.navbar-mobile--open {
+  max-height: 400px;
+}
+
+.navbar-mobile-link {
+  padding: 0.9rem 1.5rem;
+  font-family: 'Crimson Text', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(245, 197, 24, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s, background 0.2s, padding-left 0.2s;
+}
+
+.navbar-mobile-link:hover {
+  color: var(--gold);
+  background: var(--gold-dim);
+  padding-left: 2rem;
+}
+
+.navbar-mobile-link.navbar-link--active {
+  color: #8a0a0f;
+  background: linear-gradient(90deg, #ffc84e, #f9f5a0 80%);
+  border-bottom-color: #c9913a;
+}
+
+/* Mobile profile link — username treatment */
+.navbar-mobile-profile {
+  color: var(--gold);
+  border-bottom: none;
+}
+
+.navbar-mobile-profile svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* Mobile sign-in button reset */
+.navbar-mobile-signin {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(245, 197, 24, 0.06);
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.navbar-mobile-signin:hover {
+  color: var(--gold);
+  background: var(--gold-dim);
+  padding-left: 2rem;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+
+/* Shrink username label on mid screens */
+@media (max-width: 1060px) {
+  .navbar-profile-label {
+    max-width: 90px;
+  }
+}
+
+/* Compact links on slightly smaller desktop */
+@media (max-width: 980px) {
+  .navbar-link {
+    padding: 0.25rem 0.42rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* Switch to burger menu */
+@media (max-width: 900px) {
+  .navbar-links        { display: none; }
+  .navbar-divider      { display: none; }
+  .navbar-burger       { display: flex; }
+  .navbar-mobile       { display: flex; }
+  .navbar-profile-label { display: none; }
+  .navbar-profile      { padding: 0.28rem 0.5rem; }
+  .magsuri-wrapper     { display: none; }
+}
+
+/* Very small screens */
+@media (max-width: 400px) {
+  .navbar-inner {
+    padding: 0 1rem;
+    height: 56px;
+  }
+
+  .logo-line2 {
+    font-size: 1rem;
+  }
+}
