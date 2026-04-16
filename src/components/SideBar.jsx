@@ -6,7 +6,6 @@ import './SideBar.css'
 export default function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Pangunahing nabigasyon">
-      <p className="sidebar-section-label">Nabigasyon</p>
       <nav>
         {navLinks.map(link => (
           <NavLink

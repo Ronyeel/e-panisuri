@@ -367,7 +367,33 @@
   text-align: left;
 }
 .auth-back:hover { color: var(--gold); }
+/* ── Add these rules to the bottom of auth.css ── */
 
+.auth-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem; /* room for chevron */
+  cursor: pointer;
+  color: var(--ink);
+}
+.auth-select:invalid,
+.auth-select option[value=""] {
+  color: var(--muted);
+}
+.auth-select option {
+  background: var(--input-bg);
+  color: var(--ink);
+}
+
+.auth-select-chevron {
+  position: absolute;
+  right: 0.7rem;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+  flex-shrink: 0;
+}
 @media (max-width: 768px) {
   .auth-card { flex-direction: column; }
   .auth-brand {

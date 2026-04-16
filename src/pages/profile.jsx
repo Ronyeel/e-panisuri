@@ -7,8 +7,28 @@ import {
   EmailAuthProvider,
   signOut,
 } from 'firebase/auth'
-import { auth } from '../API/firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import { auth, db } from '../API/firebase'
 import './profile.css'
+
+/* ─── Role badge config ───────────────────────────────────── */
+const PAPEL_CONFIG = {
+  guro:       { label: 'Guro',       className: 'prof-badge--guro' },
+  manunulat:  { label: 'Manunulat',  className: 'prof-badge--manunulat' },
+  estudyante: { label: 'Estudyante', className: 'prof-badge--estudyante' },
+  tagasuri:   { label: 'Tagasuri',   className: 'prof-badge--tagasuri' },
+}
+
+function PapelBadge({ papel }) {
+  if (!papel) return null
+  const config = PAPEL_CONFIG[papel] ?? { label: papel, className: 'prof-badge--default' }
+  return (
+    <span className={`prof-badge ${config.className}`}>
+      <BadgeIcon />
+      {config.label}
+    </span>
+  )
+}
 
 /* ─── Icons ──────────────────────────────────────────────── */
 function UserIcon() {
@@ -47,6 +67,13 @@ function SignOutIcon() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+}
+function BadgeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: 11, height: 11, flexShrink: 0 }}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   )
 }
@@ -116,6 +143,8 @@ export default function ProfilePage({ onNotify }) {
   const user     = auth.currentUser
   const nameRef  = useRef(null)
 
+  const [papel, setPapel] = useState(null)
+
   const [nameForm,  setNameForm]  = useState({ username: user?.displayName || '' })
   const [nameErr,   setNameErr]   = useState({})
   const [nameBusy,  setNameBusy]  = useState(false)
@@ -127,8 +156,13 @@ export default function ProfilePage({ onNotify }) {
   const [passShake, setPassShake] = useState(false)
 
   useEffect(() => {
-    if (!user) navigate('/login')
+    if (!user) { navigate('/login'); return }
     nameRef.current?.focus()
+
+    // Fetch papel from Firestore
+    getDoc(doc(db, 'users', user.uid))
+      .then(snap => { if (snap.exists()) setPapel(snap.data()?.papel ?? null) })
+      .catch(() => {})
   }, [user, navigate])
 
   const shake = (setter) => {
@@ -222,9 +256,12 @@ export default function ProfilePage({ onNotify }) {
           <Avatar name={user.displayName || user.email} />
           <div className="prof-header-text">
             <p className="prof-header-label">Inyong Account</p>
-            <h1 className="prof-header-name">
-              {user.displayName || 'Mambabasa'}
-            </h1>
+            <div className="prof-header-name-row">
+              <h1 className="prof-header-name">
+                {user.displayName || 'Mambabasa'}
+              </h1>
+              <PapelBadge papel={papel} />
+            </div>
             <p className="prof-header-email">{user.email}</p>
           </div>
           <button className="prof-signout-btn" onClick={handleSignOut} aria-label="Mag-sign out">

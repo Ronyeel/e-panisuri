@@ -8,7 +8,7 @@ const BOOK_W   = 174
 const BOOK_GAP = 18
 const ANIM_MS  = 480
 
-// ── Colour extraction (same logic as useBookPalette) ─────────────────────────
+// ── Colour extraction ─────────────────────────────────────────────────────────
 function extractColor(src) {
   return new Promise((resolve) => {
     const img = new Image()
@@ -34,50 +34,79 @@ function extractColor(src) {
   })
 }
 
-function randomNext(current, length) {
-  if (length <= 1) return 0
-  let next
-  do { next = Math.floor(Math.random() * length) } while (next === current)
-  return next
+// Merge Supabase books with local JSON, local fills in any missing ids
+function mergeWithLocal(supabaseData) {
+  const supabaseIds = supabaseData.map(b => b.id)
+  const localOnly   = localBooks.filter(b => !supabaseIds.includes(b.id))
+  return [...supabaseData, ...localOnly]
 }
 
 export default function MgaLibro() {
-  const navigate  = useNavigate()
-  const caseRef   = useRef(null)
-  const sectionRef = useRef(null)
-  const canvasRef  = useRef(null)
+  const navigate    = useNavigate()
+  const caseRef     = useRef(null)
+  const sectionRef  = useRef(null)
+  const canvasRef   = useRef(null)
   const ambianceRef = useRef(null)
 
-  const [books, setBooks]       = useState(localBooks)
-  const [perShelf, setPerShelf] = useState(null)
-  const [animating, setAnimating] = useState(false)
-  const prevPer   = useRef(null)
+  const [books,        setBooks]        = useState(localBooks)
+  const [perShelf,     setPerShelf]     = useState(null)
+  const [animating,    setAnimating]    = useState(false)
   const [transferring, setTransferring] = useState([])
+  const prevPer = useRef(null)
 
-  // Ambient color state
-  const [ambColor, setAmbColor]       = useState({ r: 232, g: 160, b: 32 })
-  const [isHovering, setIsHovering]   = useState(false)
+  const [ambColor,   setAmbColor]   = useState({ r: 232, g: 160, b: 32 })
+  const [isHovering, setIsHovering] = useState(false)
   const colorCache = useRef({})
   const ambTimer   = useRef(null)
 
-  // ── Fetch from Supabase ───────────────────────────────────────────────────
+  // ── Supabase: initial fetch + granular real-time listeners ───────────────
   useEffect(() => {
-    async function fetchBooks() {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .order('year', { ascending: true })
+    // 1. Initial load
+    supabase
+      .from('books')
+      .select('*')
+      .order('year', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data?.length) setBooks(mergeWithLocal(data))
+      })
 
-      if (!error && data.length > 0) {
-        const supabaseIds = data.map(b => b.id)
-        const localOnly   = localBooks.filter(b => !supabaseIds.includes(b.id))
-        setBooks([...data, ...localOnly])
-      }
-    }
-    fetchBooks()
+    // 2. Real-time: update state surgically per event type — no full re-fetch needed
+    const channel = supabase
+      .channel('books-live')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'books' },
+        ({ new: newBook }) => {
+          setBooks(prev => {
+            if (prev.find(b => b.id === newBook.id)) return prev
+            // insert into supabase portion, keep local-only books at the end
+            const supabaseBooks = prev.filter(b => !localBooks.find(l => l.id === b.id))
+            const localOnly     = localBooks.filter(b => !supabaseBooks.find(s => s.id === b.id) && b.id !== newBook.id)
+            return [...supabaseBooks, newBook, ...localOnly]
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'books' },
+        ({ new: updated }) => {
+          // Patch only the changed book — instant, no flicker
+          setBooks(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'books' },
+        ({ old: deleted }) => {
+          setBooks(prev => prev.filter(b => b.id !== deleted.id))
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // ── Apply ambient colour to CSS vars ─────────────────────────────────────
+  // ── Ambient colour → CSS vars ─────────────────────────────────────────────
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
@@ -86,7 +115,7 @@ export default function MgaLibro() {
     el.style.setProperty('--amb-b', ambColor.b)
   }, [ambColor])
 
-  // ── Dust particle animation ───────────────────────────────────────────────
+  // ── Dust particles ────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas  = canvasRef.current
     const section = sectionRef.current
@@ -119,9 +148,9 @@ export default function MgaLibro() {
         p.drift += p.driftSpeed
         p.x += p.dx + Math.sin(p.drift) * 0.12
         p.y += p.dy
-        if (p.y < -5)                p.y = canvas.height + 5
-        if (p.x < -5)                p.x = canvas.width + 5
-        if (p.x > canvas.width + 5)  p.x = -5
+        if (p.y < -5)               p.y = canvas.height + 5
+        if (p.x < -5)               p.x = canvas.width  + 5
+        if (p.x > canvas.width + 5) p.x = -5
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(${r}, ${Math.min(255, g + 60)}, ${b}, ${p.alpha})`
@@ -138,11 +167,10 @@ export default function MgaLibro() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Book hover handlers ───────────────────────────────────────────────────
+  // ── Book hover ────────────────────────────────────────────────────────────
   const handleBookEnter = useCallback(async (cover) => {
     clearTimeout(ambTimer.current)
     setIsHovering(true)
-
     if (colorCache.current[cover]) {
       setAmbColor(colorCache.current[cover])
       return
@@ -159,7 +187,7 @@ export default function MgaLibro() {
     }, 600)
   }, [])
 
-  // ── Responsive shelf measure ──────────────────────────────────────────────
+  // ── Responsive shelf ──────────────────────────────────────────────────────
   const measure = useCallback(() => {
     if (!caseRef.current) return
     const w   = caseRef.current.offsetWidth
@@ -175,7 +203,6 @@ export default function MgaLibro() {
       } else {
         for (let i = fit - (fit - oldFit); i < Math.min(fit, books.length); i++) moving.push(i)
       }
-
       if (moving.length) {
         const dir = fit < oldFit ? 'down' : 'up'
         setTransferring(moving.map(i => ({ idx: i, dir })))
@@ -216,10 +243,8 @@ export default function MgaLibro() {
   return (
     <section className="ml-section" id="mga-libro" ref={sectionRef}>
 
-      {/* Dust particles */}
       <canvas className="ml-dust-canvas" ref={canvasRef} />
 
-      {/* Reactive ambient glow */}
       <div
         className="ml-ambiance"
         ref={ambianceRef}
@@ -250,15 +275,9 @@ export default function MgaLibro() {
                 const xfer      = isTransferring(globalIdx)
                 return (
                   <div
-                    className={[
-                      'ml-book',
-                      xfer ? `ml-book--transfer-${xfer.dir}` : ''
-                    ].join(' ')}
+                    className={['ml-book', xfer ? `ml-book--transfer-${xfer.dir}` : ''].join(' ')}
                     key={b.id}
-                    style={{
-                      '--book-nth': bi,
-                      animationDelay: xfer ? `${bi * 40}ms` : '0ms',
-                    }}
+                    style={{ '--book-nth': bi, animationDelay: xfer ? `${bi * 40}ms` : '0ms' }}
                     onClick={() => navigate(`/libro/${b.id}`)}
                     onMouseEnter={() => handleBookEnter(b.cover)}
                     onMouseLeave={handleBookLeave}

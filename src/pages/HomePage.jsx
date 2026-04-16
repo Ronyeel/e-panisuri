@@ -296,8 +296,8 @@ export default function HomePage() {
         <div className="school-overlay" />
         <div className="school-banner__content">
           <h2 className="school-headline">
-            Lumikha. Maglakbay.<br />
-            <em>Patungo sa Obra Mong Script.</em>
+            Magsulat. Magbasa. Magsuri. <br />
+            <em>Patungo sa Holistikong Kasanayan at <br></br>Kaalamang Panunuri.</em>
           </h2>
         </div>
       </section>

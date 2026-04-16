@@ -1,8 +1,8 @@
-// App.jsx
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from './API/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { auth, db } from './API/firebase'
 
 import NavBar        from './components/NavBar'
 import Footer        from './components/Footer'
@@ -13,7 +13,7 @@ import AdminLayout   from './admin/adminLayout'
 import AdminDashboard from './admin/adminDashboard'
 import AdminBooks    from './admin/adminBooks'
 import AdminQuiz     from './admin/adminQuiz'
-import AdminExcerpts from './admin/adminExcerpst'
+import AdminExcerpts from './admin/adminExcerpts'
 
 import HomePage      from './pages/HomePage'
 import MgaLibro      from './pages/mgaLibro'
@@ -28,14 +28,12 @@ import MagsuriTayo   from './pages/magsuriTayo'
 
 /* ─────────────────────────────────────────────────────────── */
 
-// Routes where the NavBar / Sidebar / Footer are hidden
 const CHROME_HIDDEN_ROUTES = new Set([
   '/login',
   '/register',
   '/magsuri',
 ])
 
-// Routes that require a logged-in user
 const PROTECTED_ROUTES = new Set([
   '/',
   '/mga-libro',
@@ -47,11 +45,45 @@ const PROTECTED_ROUTES = new Set([
 
 /* ─────────────────────────────────────────────────────────── */
 
+// Upgraded RequireAuth — also checks if Firestore doc still exists
 function RequireAuth({ user, children }) {
   const { pathname } = useLocation()
-  if (!user && PROTECTED_ROUTES.has(pathname)) {
+  const [status, setStatus] = useState('checking') // 'checking' | 'ok' | 'deleted' | 'unauth'
+
+  useEffect(() => {
+    if (!user) {
+      setStatus(PROTECTED_ROUTES.has(pathname) ? 'unauth' : 'ok')
+      return
+    }
+
+    let cancelled = false
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (cancelled) return
+      if (!snap.exists()) {
+        signOut(auth)
+        setStatus('deleted')
+      } else {
+        setStatus('ok')
+      }
+    }).catch(() => {
+      if (!cancelled) setStatus('ok') // fail open on network error
+    })
+
+    return () => { cancelled = true }
+  }, [user, pathname])
+
+  if (status === 'checking') {
+    return <div style={{ minHeight: '100vh', background: '#0d0d0d' }} />
+  }
+
+  if (status === 'deleted') {
+    return <Navigate to="/login?reason=deleted" replace />
+  }
+
+  if (status === 'unauth') {
     return <Navigate to="/login" replace />
   }
+
   return children
 }
 
@@ -65,7 +97,7 @@ function useHideChrome() {
   return (
     pathname.startsWith('/libro/') ||
     pathname === '/excerpts'       ||
-    pathname.startsWith('/admin')  || // admin has its own chrome
+    pathname.startsWith('/admin')  ||
     CHROME_HIDDEN_ROUTES.has(pathname)
   )
 }
@@ -107,13 +139,7 @@ function Layout({ notif, setNotif, user }) {
             </RedirectIfAuthed>
           } />
 
-          {/* ── Admin routes (nested under AdminLayout) ────── */}
-          {/*
-              AdminRoute re-fetches the Firestore role on every mount.
-              AdminLayout renders <Outlet /> for each child page.
-              Each child is individually wrapped in AdminRoute too,
-              so even direct URL navigation is blocked.
-          */}
+          {/* ── Admin routes ───────────────────────────────── */}
           <Route
             path="/admin"
             element={
@@ -126,9 +152,7 @@ function Layout({ notif, setNotif, user }) {
             <Route path="books"    element={<AdminBooks />} />
             <Route path="quiz"     element={<AdminQuiz />} />
             <Route path="excerpts" element={<AdminExcerpts />} />
-
-            {/* Unknown /admin/* sub-paths → back to dashboard */}
-            <Route path="*" element={<Navigate to="/admin" replace />} />
+            <Route path="*"        element={<Navigate to="/admin" replace />} />
           </Route>
 
           {/* ── Protected user routes ──────────────────────── */}
@@ -185,7 +209,6 @@ function App() {
     return () => unsubscribe()
   }, [])
 
-  // Hold render until Firebase resolves — prevents flash of wrong page
   if (!authReady) return <div style={{ minHeight: '100vh', background: '#0d0d0d' }} />
 
   return (
