@@ -227,9 +227,9 @@ export default function ProfilePage({ onNotify }) {
     setNameBusy(true)
     try {
       await updateProfile(user, { displayName: nameForm.username.trim() })
-      onNotify?.({ message: 'Username na-update nang matagumpay!', type: 'success' })
+      onNotify?.({ message: 'Matagumpay na napalitan ang iyong Username!', type: 'success' })
     } catch {
-      setNameErr({ username: 'Hindi ma-update. Subukan muli.' })
+      setNameErr({ username: 'Hindi ma-update. Subukang muli.' })
       triggerShake(setNameShake)
       onNotify?.({ message: 'Hindi ma-update ang username.', type: 'error' })
     } finally {

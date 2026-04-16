@@ -17,12 +17,12 @@
     to { transform: rotate(360deg); }
     }
 
-    /* ── Dropdown container ── */
-    .search-dropdown {
+  /* ── Dropdown container ── */
+.search-dropdown {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 30%; /* ✅ matches search bar exactly */
+  width: 37%;
   z-index: 200;
 
   list-style: none;
@@ -37,6 +37,32 @@
   max-height: 340px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* Slim Yellow Scrollbar */
+.search-dropdown::-webkit-scrollbar {
+  width: 4px;                    /* Very slim */
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+  background: #f5c518;           /* Your gold/yellow color */
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #ffd34d;           /* Lighter yellow on hover */
+}
+
+/* Firefox Support */
+.search-dropdown {
+  scrollbar-width: thin;         /* slim */
+  scrollbar-color: #f5c518 transparent;
 }
 
     /* ── State rows (loading / error / empty) ── */

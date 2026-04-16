@@ -1,29 +1,30 @@
-// NavBar.jsx
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import SearchBar from './searchBar'
 import './NavBar.css'
 
+// ✅ React Icons (Material)
+import {
+  MdPerson,
+  MdQuiz,
+ MdSummarize
+} from 'react-icons/md'
+
 export const navLinks = [
-  { label: 'Home',                    to: '/' },
-  { label: 'Mga Libro',               to: '/mga-libro' },
-  { label: 'Pagsusuri',               to: '/pagsusuri' },
-  { label: 'Teoryang Pampanitikan',   to: '/teorya' },
-  { label: 'Bagong Pamantayan',       to: '/bagong-pamantayan' },
-  { label: 'Tungkol Sa Amin',         to: '/tungkol-sa' },
+  { label: 'Home',                  to: '/' },
+  { label: 'Mga Libro',             to: '/mga-libro' },
+  { label: 'Pagsusuri',             to: '/pagsusuri' },
+  { label: 'Teoryang Pampanitikan', to: '/teorya' },
+  { label: 'Bagong Pamantayan',     to: '/bagong-pamantayan' },
+  { label: 'Tungkol Sa Amin',       to: '/tungkol-sa' },
 ]
 
+// ✅ Replaced SVG with React Icon
 function UserIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-    </svg>
-  )
+  return <MdPerson size={18} />
 }
 
-/* NEW: Pagsusulit Button */
+/* ✅ Pagsusulit Button (React Icon) */
 function PagsusulitButton({ onClick }) {
   return (
     <div className="pagsusulit-wrapper">
@@ -32,7 +33,7 @@ function PagsusulitButton({ onClick }) {
         onClick={onClick}
         aria-label="Pagsusulit"
       >
-        <img src="/quiz.svg" alt="Pagsusulit" className="pagsusulit-icon" />
+        <MdQuiz size={20} />
       </button>
       <div className="pagsusulit-tooltip">
         <span className="pagsusulit-tooltip-title">Pagsusulit</span>
@@ -41,11 +42,16 @@ function PagsusulitButton({ onClick }) {
   )
 }
 
+/* ✅ Magsuri Button (React Icon) */
 function MagsuriButton({ onClick }) {
   return (
     <div className="magsuri-wrapper">
-      <button className="magsuri-btn" onClick={onClick} aria-label="Magsuri Tayo">
-        <img src="/examine.svg" alt="Magsuri Tayo" className="magsuri-icon" />
+      <button
+        className="magsuri-btn"
+        onClick={onClick}
+        aria-label="Magsuri Tayo"
+      >
+        <MdSummarize size={20} />
       </button>
       <div className="magsuri-tooltip">
         <span className="magsuri-tooltip-title">Magsuri Tayo</span>
@@ -63,8 +69,12 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
   const close = () => setMenuOpen(false)
 
   const handleProfileClick = () => {
-    if (isLoggedIn) { navigate('/profile'); close() }
-    else setNotifOpen(true)
+    if (isLoggedIn) {
+      navigate('/profile')
+      close()
+    } else {
+      setNotifOpen(true)
+    }
   }
 
   const displayName = username
@@ -77,13 +87,20 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
         <div className="navbar-inner">
 
           {/* Logo */}
-          <a href="/" className="navbar-logo"
-            onClick={e => { e.preventDefault(); navigate('/'); close() }}>
+          <a
+            href="/"
+            className="navbar-logo"
+            onClick={e => {
+              e.preventDefault()
+              navigate('/')
+              close()
+            }}
+          >
             <span className="logo-line1">WEBSITE</span>
             <span className="logo-line2">LOGO</span>
           </a>
 
-          {/* Search bar */}
+          {/* Search */}
           <SearchBar
             mobileOpen={searchOpen}
             onMobileToggle={() => setSearchOpen(v => !v)}
@@ -93,19 +110,24 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
           <div className="navbar-actions">
             <div className="navbar-divider" />
 
-            {/* NEW: Pagsusulit (BEFORE Magsuri) */}
+            {/* Pagsusulit */}
             <PagsusulitButton onClick={() => navigate('/pagsusulit')} />
 
-            {/* Existing */}
+            {/* Magsuri */}
             <MagsuriButton onClick={() => navigate('/magsuri')} />
 
+            {/* Profile */}
             <button
               className={`navbar-profile${isLoggedIn ? ' navbar-profile--loggedin' : ''}`}
               aria-label={isLoggedIn ? `Pumunta sa Profile ni ${username}` : 'Mag-Sign In'}
               onClick={handleProfileClick}
             >
-              <span className="navbar-profile-icon"><UserIcon /></span>
-              <span className="navbar-profile-label">{displayName}</span>
+              <span className="navbar-profile-icon">
+                <UserIcon />
+              </span>
+              <span className="navbar-profile-label">
+                {displayName}
+              </span>
             </button>
 
             {/* Hamburger */}
@@ -115,13 +137,16 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
             >
-              <span /><span /><span />
+              <span />
+              <span />
+              <span />
             </button>
           </div>
         </div>
 
-        {/* Mobile nav */}
+        {/* Mobile Nav */}
         <div className={`navbar-mobile ${menuOpen ? 'navbar-mobile--open' : ''}`}>
+          
           {navLinks.map(link => (
             <NavLink
               key={link.label}
@@ -135,7 +160,7 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
             </NavLink>
           ))}
 
-          {/* Add mobile access too */}
+          {/* Extra routes */}
           <NavLink
             to="/pagsusulit"
             className={({ isActive }) =>
@@ -143,6 +168,7 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
             }
             onClick={close}
           >
+            <MdQuiz size={18} style={{ marginRight: 6 }} />
             Pagsusulit
           </NavLink>
 
@@ -153,6 +179,7 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
             }
             onClick={close}
           >
+            <MdSummarize size={18} style={{ marginRight: 6 }} />
             Magsuri Tayo
           </NavLink>
 
@@ -162,14 +189,19 @@ export default function NavBar({ isLoggedIn = false, username = '' }) {
               className="navbar-mobile-link navbar-mobile-profile"
               onClick={close}
             >
-              <UserIcon /> {username || 'Profile'}
+              <MdPerson size={18} style={{ marginRight: 6 }} />
+              {username || 'Profile'}
             </NavLink>
           ) : (
             <button
               className="navbar-mobile-link navbar-mobile-profile navbar-mobile-signin"
-              onClick={() => { close(); setNotifOpen(true) }}
+              onClick={() => {
+                close()
+                setNotifOpen(true)
+              }}
             >
-              <UserIcon /> Mag-Sign In
+              <MdPerson size={18} style={{ marginRight: 6 }} />
+              Mag-Sign In
             </button>
           )}
         </div>

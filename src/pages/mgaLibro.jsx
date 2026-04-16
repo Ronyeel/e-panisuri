@@ -8,7 +8,13 @@ const BOOK_W   = 174
 const BOOK_GAP = 18
 const ANIM_MS  = 480
 
-// ── Colour extraction ─────────────────────────────────────────────────────────
+// ─── DEBUG flag — set to false before deploying ───────────────────────────────
+const DEV_REALTIME_LOG = import.meta.env.DEV
+
+function log(...args) {
+  if (DEV_REALTIME_LOG) console.log('[MgaLibro RT]', ...args)
+}
+
 function extractColor(src) {
   return new Promise((resolve) => {
     const img = new Image()
@@ -30,17 +36,15 @@ function extractColor(src) {
     }
     img.onerror = () => resolve({ r: 232, g: 160, b: 32 })
     img.src = src
+    // Fire immediately if already cached by browser
     if (img.complete && img.naturalWidth > 0) img.onload()
   })
 }
 
-// ── Merge helpers ─────────────────────────────────────────────────────────────
-// Returns a Set of IDs that belong to Supabase (i.e. were fetched remotely).
-// Local-only books fill in any IDs not yet in Supabase.
-function buildMerged(supabaseBooks) {
-  const remoteIds = new Set(supabaseBooks.map(b => b.id))
+function buildMerged(remoteBooks) {
+  const remoteIds = new Set(remoteBooks.map(b => b.id))
   const localOnly = localBooks.filter(b => !remoteIds.has(b.id))
-  return [...supabaseBooks, ...localOnly]
+  return [...remoteBooks, ...localOnly]
 }
 
 export default function MgaLibro() {
@@ -49,107 +53,150 @@ export default function MgaLibro() {
   const sectionRef  = useRef(null)
   const canvasRef   = useRef(null)
 
+  // Ref holds the live remote list — event handlers read this directly,
+  // so they never capture a stale closure and the channel never restarts.
+  const remoteBooksRef  = useRef([])
+  const mountedRef      = useRef(true)
+  const channelRef      = useRef(null)
+  const retryTimerRef   = useRef(null)
+
   const [books,        setBooks]        = useState(() => localBooks)
   const [perShelf,     setPerShelf]     = useState(null)
   const [animating,    setAnimating]    = useState(false)
   const [transferring, setTransferring] = useState([])
+  const [rtStatus,     setRtStatus]     = useState('connecting')
   const prevPer = useRef(null)
 
   const [ambColor,   setAmbColor]   = useState({ r: 232, g: 160, b: 32 })
   const [isHovering, setIsHovering] = useState(false)
   const colorCache  = useRef({})
   const ambTimer    = useRef(null)
-
-  // Keep a ref to ambColor so the canvas animation loop always reads the latest value
-  // without needing to restart the effect (fixes stale-closure dust-particle bug).
   const ambColorRef = useRef(ambColor)
   useEffect(() => { ambColorRef.current = ambColor }, [ambColor])
 
-  // ── Supabase: initial fetch + robust real-time channel ────────────────────
+  // ── Commit helper — always use this to update remote list + React state ──
+  const commit = useCallback((nextRemote) => {
+    if (!mountedRef.current) return
+    remoteBooksRef.current = nextRemote
+    setBooks(buildMerged(nextRemote))
+    log('commit — total remote rows:', nextRemote.length)
+  }, [])
+
+  // ── Fetch all rows from Supabase ──────────────────────────────────────────
+  const fetchAll = useCallback(async () => {
+    log('fetchAll()')
+    const { data, error } = await supabase
+      .from('books')
+      .select('*')
+      .order('year', { ascending: true })
+    if (error) {
+      console.error('[MgaLibro] fetch error:', error)
+      return
+    }
+    if (data) commit(data)
+  }, [commit])
+
+  // ── Subscribe to realtime changes ─────────────────────────────────────────
+  const subscribe = useCallback(() => {
+    // Clean up any existing channel before re-subscribing
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
+    log('subscribe()')
+
+    const channel = supabase
+      .channel('mga-libro-realtime', {
+        config: {
+          // Broadcast presence so Supabase knows there's an active listener
+          presence: { key: 'mga-libro' },
+        },
+      })
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'books' },
+        ({ new: row }) => {
+          log('INSERT', row.id, row.title)
+          const cur = remoteBooksRef.current
+          if (cur.some(b => b.id === row.id)) return
+          commit(
+            [...cur, row].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'books' },
+        ({ new: row }) => {
+          log('UPDATE', row.id, row.title)
+          const cur    = remoteBooksRef.current
+          const exists = cur.some(b => b.id === row.id)
+          commit(
+            exists
+              ? cur.map(b => b.id === row.id ? { ...b, ...row } : b)
+              : [...cur, row].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'books' },
+        ({ old: row }) => {
+          log('DELETE', row.id)
+          // NOTE: DELETE only sends the old row if REPLICA IDENTITY FULL is set.
+          // If row.id is undefined here, run this in your Supabase SQL editor:
+          //   ALTER TABLE books REPLICA IDENTITY FULL;
+          if (!row.id) {
+            console.warn(
+              '[MgaLibro] DELETE event missing row.id — run in Supabase SQL:\n' +
+              '  ALTER TABLE books REPLICA IDENTITY FULL;'
+            )
+            // Refetch as fallback since we can't identify which row was deleted
+            fetchAll()
+            return
+          }
+          commit(remoteBooksRef.current.filter(b => b.id !== row.id))
+        }
+      )
+      .subscribe((status, err) => {
+        log('channel status:', status, err ?? '')
+        if (mountedRef.current) setRtStatus(status)
+
+        if (status === 'SUBSCRIBED') {
+          // Safe to fetch now — no INSERT can slip between sub + fetch
+          fetchAll()
+        }
+
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('[mga-libro-realtime]', status, '— scheduling re-subscribe in 3 s')
+          // Re-fetch immediately to catch any missed events
+          fetchAll()
+          // Then reconnect
+          clearTimeout(retryTimerRef.current)
+          retryTimerRef.current = setTimeout(() => {
+            if (mountedRef.current) subscribe()
+          }, 3000)
+        }
+      })
+
+    channelRef.current = channel
+  }, [commit, fetchAll])
+
+  // ── Realtime bootstrap — runs once ───────────────────────────────────────
   useEffect(() => {
-    let channel
-
-    // Track whether the remote dataset has loaded so local fallback isn't clobbered
-    let remoteLoaded = false
-
-    // 1. Initial full fetch
-    const initialFetch = async () => {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .order('year', { ascending: true })
-
-      if (!error && data?.length) {
-        remoteLoaded = true
-        setBooks(buildMerged(data))
-      }
-    }
-
-    // 2. Subscribe to granular changes — reuse the same channel reference so
-    //    we can safely remove it on cleanup.
-    const subscribe = () => {
-      channel = supabase
-        .channel('books-live', {
-          config: { broadcast: { self: false } },
-        })
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'books' },
-          ({ new: newBook }) => {
-            setBooks(prev => {
-              // Guard: don't add a duplicate
-              if (prev.some(b => b.id === newBook.id)) return prev
-              // Separate remote vs local-only books, then splice in the newcomer
-              const localOnlyIds = new Set(localBooks.map(b => b.id))
-              const remote    = prev.filter(b => !localOnlyIds.has(b.id))
-              const localOnly = prev.filter(b => localOnlyIds.has(b.id))
-              // Insert newBook into the remote portion (keep sorted by year if present)
-              const updatedRemote = [...remote, newBook].sort((a, b) =>
-                (a.year ?? 9999) - (b.year ?? 9999)
-              )
-              return [...updatedRemote, ...localOnly]
-            })
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'books' },
-          ({ new: updated }) => {
-            // Surgical patch — only the changed row re-renders
-            setBooks(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'DELETE', schema: 'public', table: 'books' },
-          ({ old: deleted }) => {
-            setBooks(prev => prev.filter(b => b.id !== deleted.id))
-          }
-        )
-        .on('system', {}, (status) => {
-          // If the channel disconnects unexpectedly, re-fetch to catch any
-          // events we may have missed during the gap.
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[books-live] channel issue, re-fetching…', status)
-            initialFetch()
-          }
-        })
-        .subscribe((status, err) => {
-          if (err) console.error('[books-live] subscribe error:', err)
-          // If subscription failed entirely, fall back to polling or log clearly
-          if (status === 'CHANNEL_ERROR') {
-            console.error('[books-live] could not connect to realtime channel')
-          }
-        })
-    }
-
-    initialFetch()
+    mountedRef.current = true
     subscribe()
 
     return () => {
-      if (channel) supabase.removeChannel(channel)
+      mountedRef.current = false
+      clearTimeout(retryTimerRef.current)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
     }
-  }, []) // run once on mount
+  }, []) // ← intentionally empty — subscribe/fetchAll are stable refs
 
   // ── Ambient colour → CSS vars ─────────────────────────────────────────────
   useEffect(() => {
@@ -161,7 +208,6 @@ export default function MgaLibro() {
   }, [ambColor])
 
   // ── Dust particles ────────────────────────────────────────────────────────
-  // Uses ambColorRef so it reads live colour without restarting the loop.
   useEffect(() => {
     const canvas  = canvasRef.current
     const section = sectionRef.current
@@ -189,7 +235,6 @@ export default function MgaLibro() {
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      // ✅ Fixed: read from ref so particles always use the current hover colour
       const { r, g, b } = ambColorRef.current
       particles.forEach(p => {
         p.drift += p.driftSpeed
@@ -211,10 +256,11 @@ export default function MgaLibro() {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, []) // runs once — reads colour via ref, no restart needed
+  }, [])
 
   // ── Book hover ────────────────────────────────────────────────────────────
   const handleBookEnter = useCallback(async (cover) => {
+    if (!cover) return
     clearTimeout(ambTimer.current)
     setIsHovering(true)
     if (colorCache.current[cover]) {
