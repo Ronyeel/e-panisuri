@@ -1,28 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../API/supabase'
+import booksData from '../data/books.json'
 
 // ─────────────────────────────────────────────
-const STATIC_SOURCES = []
-
 const DEBOUNCE_MS = 300
-const MAX_RESULTS = 8
+const MAX_RESULTS = 10
 
 // ─────────────────────────────────────────────
-// STATIC SEARCH
+// STATIC SEARCH — books.json
 function searchStatic(query) {
   const lower = query.toLowerCase()
   const results = []
 
-  for (const source of STATIC_SOURCES) {
-    for (const item of source.data) {
-      if (item.title?.toLowerCase().includes(lower)) {
-        results.push({
-          id:       `static-${source.category}-${item.slug}`,
-          title:    item.title,
-          category: source.category,
-          path:     `${source.basePath}/${item.slug}`,
-        })
-      }
+  for (const item of booksData) {
+    const matches =
+      item.title?.toLowerCase().includes(lower)  ||
+      item.author?.toLowerCase().includes(lower) ||
+      item.genre?.toLowerCase().includes(lower)  ||
+      String(item.year ?? '').includes(lower)
+
+    if (matches) {
+      results.push({
+        id:       `static-book-${item.id}`,
+        title:    item.title,
+        subtitle: item.author ?? '',
+        category: 'Mga Libro',
+        path:     `/mga-libro/${item.id}`,
+      })
     }
   }
 
@@ -30,52 +34,71 @@ function searchStatic(query) {
 }
 
 // ─────────────────────────────────────────────
-// SUPABASE SEARCH
+// SUPABASE SEARCH — books, excerpts, quiz
 async function searchSupabase(query) {
   const pattern = `%${query}%`
 
   try {
-    const [booksRes, excerptsRes] = await Promise.all([
-      // ── BOOKS ─────────────────────────────
+    const [booksRes, excerptsRes, quizRes] = await Promise.all([
+
+      // ── BOOKS ────────────────────────────────
       supabase
         .from('books')
-        .select('id, title, author')
-        .or(`title.ilike.${pattern},author.ilike.${pattern}`)
+        .select('id, title, author, genre, year')
+        .or(`title.ilike."${pattern}",author.ilike."${pattern}",genre.ilike."${pattern}"`)
         .limit(MAX_RESULTS),
 
-      // ── EXCERPTS ──────────────────────────
+      // ── EXCERPTS ─────────────────────────────
       supabase
         .from('excerpts')
-        .select('id, title, bookTitle')
-        .or(`title.ilike.${pattern},bookTitle.ilike.${pattern}`)
+        .select('id, bookTitle, author, tag, year, excerpt')
+        .or(`bookTitle.ilike."${pattern}",author.ilike."${pattern}",tag.ilike."${pattern}",excerpt.ilike."${pattern}"`)
+        .limit(MAX_RESULTS),
+
+      // ── QUIZ ─────────────────────────────────
+      supabase
+        .from('quiz')
+        .select('id, question, category, difficulty')
+        .or(`question.ilike."${pattern}",category.ilike."${pattern}",difficulty.ilike."${pattern}"`)
         .limit(MAX_RESULTS),
     ])
 
-    if (booksRes.error) console.error('Books error:', booksRes.error)
+    if (booksRes.error)    console.error('Books error:',    booksRes.error)
     if (excerptsRes.error) console.error('Excerpts error:', excerptsRes.error)
+    if (quizRes.error)     console.error('Quiz error:',     quizRes.error)
 
-    // ── MAP BOOKS ──────────────────────────
+    // ── MAP BOOKS ────────────────────────────
     const books = (booksRes.data ?? []).map(item => ({
       id:       `book-${item.id}`,
       title:    item.title,
+      subtitle: item.author ?? '',
       category: 'Mga Libro',
       path:     `/mga-libro/${item.id}`,
-      subtitle: item.author ?? '',
     }))
 
-    // ── MAP EXCERPTS ───────────────────────
+    // ── MAP EXCERPTS ─────────────────────────
     const excerpts = (excerptsRes.data ?? []).map(item => ({
-      id:       `excerpts-${item.id}`,
-      title:    item.title,
+      id:       `excerpt-${item.id}`,
+      title:    item.bookTitle,
+      subtitle: item.author
+        ? `ni ${item.author}${item.tag ? ` · ${item.tag}` : ''}`
+        : item.tag ?? '',
       category: 'Excerpt',
-
-      // IMPORTANT: correct route
-      path:     `/excerpts`,
-
-      subtitle: item.bookTitle ?? '',
+      path:     `/excerpts/${item.id}`,
     }))
 
-    return [...books, ...excerpts]
+    // ── MAP QUIZ ─────────────────────────────
+    const quiz = (quizRes.data ?? []).map(item => ({
+      id:       `quiz-${item.id}`,
+      title:    item.question,
+      subtitle: item.difficulty
+        ? `${item.difficulty}${item.category ? ` · ${item.category}` : ''}`
+        : item.category ?? '',
+      category: 'Quiz',
+      path:     `/quiz/${item.id}`,
+    }))
+
+    return [...books, ...excerpts, ...quiz]
 
   } catch (err) {
     console.error('Search failed:', err)
@@ -118,7 +141,8 @@ export function useSearch(query) {
 
         if (abortRef.current) return
 
-        const seen = new Set()
+        // Deduplicate by id, static results take priority
+        const seen   = new Set()
         const merged = []
 
         for (const item of [...staticResults, ...supabaseResults]) {
@@ -126,7 +150,6 @@ export function useSearch(query) {
             seen.add(item.id)
             merged.push(item)
           }
-
           if (merged.length >= MAX_RESULTS) break
         }
 
@@ -149,4 +172,4 @@ export function useSearch(query) {
   }, [query])
 
   return { results, loading, error }
-} 
+}

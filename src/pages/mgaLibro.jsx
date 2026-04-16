@@ -34,11 +34,13 @@ function extractColor(src) {
   })
 }
 
-// Merge Supabase books with local JSON, local fills in any missing ids
-function mergeWithLocal(supabaseData) {
-  const supabaseIds = supabaseData.map(b => b.id)
-  const localOnly   = localBooks.filter(b => !supabaseIds.includes(b.id))
-  return [...supabaseData, ...localOnly]
+// ── Merge helpers ─────────────────────────────────────────────────────────────
+// Returns a Set of IDs that belong to Supabase (i.e. were fetched remotely).
+// Local-only books fill in any IDs not yet in Supabase.
+function buildMerged(supabaseBooks) {
+  const remoteIds = new Set(supabaseBooks.map(b => b.id))
+  const localOnly = localBooks.filter(b => !remoteIds.has(b.id))
+  return [...supabaseBooks, ...localOnly]
 }
 
 export default function MgaLibro() {
@@ -46,9 +48,8 @@ export default function MgaLibro() {
   const caseRef     = useRef(null)
   const sectionRef  = useRef(null)
   const canvasRef   = useRef(null)
-  const ambianceRef = useRef(null)
 
-  const [books,        setBooks]        = useState(localBooks)
+  const [books,        setBooks]        = useState(() => localBooks)
   const [perShelf,     setPerShelf]     = useState(null)
   const [animating,    setAnimating]    = useState(false)
   const [transferring, setTransferring] = useState([])
@@ -56,55 +57,99 @@ export default function MgaLibro() {
 
   const [ambColor,   setAmbColor]   = useState({ r: 232, g: 160, b: 32 })
   const [isHovering, setIsHovering] = useState(false)
-  const colorCache = useRef({})
-  const ambTimer   = useRef(null)
+  const colorCache  = useRef({})
+  const ambTimer    = useRef(null)
 
-  // ── Supabase: initial fetch + granular real-time listeners ───────────────
+  // Keep a ref to ambColor so the canvas animation loop always reads the latest value
+  // without needing to restart the effect (fixes stale-closure dust-particle bug).
+  const ambColorRef = useRef(ambColor)
+  useEffect(() => { ambColorRef.current = ambColor }, [ambColor])
+
+  // ── Supabase: initial fetch + robust real-time channel ────────────────────
   useEffect(() => {
-    // 1. Initial load
-    supabase
-      .from('books')
-      .select('*')
-      .order('year', { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data?.length) setBooks(mergeWithLocal(data))
-      })
+    let channel
 
-    // 2. Real-time: update state surgically per event type — no full re-fetch needed
-    const channel = supabase
-      .channel('books-live')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'books' },
-        ({ new: newBook }) => {
-          setBooks(prev => {
-            if (prev.find(b => b.id === newBook.id)) return prev
-            // insert into supabase portion, keep local-only books at the end
-            const supabaseBooks = prev.filter(b => !localBooks.find(l => l.id === b.id))
-            const localOnly     = localBooks.filter(b => !supabaseBooks.find(s => s.id === b.id) && b.id !== newBook.id)
-            return [...supabaseBooks, newBook, ...localOnly]
-          })
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'books' },
-        ({ new: updated }) => {
-          // Patch only the changed book — instant, no flicker
-          setBooks(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'books' },
-        ({ old: deleted }) => {
-          setBooks(prev => prev.filter(b => b.id !== deleted.id))
-        }
-      )
-      .subscribe()
+    // Track whether the remote dataset has loaded so local fallback isn't clobbered
+    let remoteLoaded = false
 
-    return () => { supabase.removeChannel(channel) }
-  }, [])
+    // 1. Initial full fetch
+    const initialFetch = async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .order('year', { ascending: true })
+
+      if (!error && data?.length) {
+        remoteLoaded = true
+        setBooks(buildMerged(data))
+      }
+    }
+
+    // 2. Subscribe to granular changes — reuse the same channel reference so
+    //    we can safely remove it on cleanup.
+    const subscribe = () => {
+      channel = supabase
+        .channel('books-live', {
+          config: { broadcast: { self: false } },
+        })
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'books' },
+          ({ new: newBook }) => {
+            setBooks(prev => {
+              // Guard: don't add a duplicate
+              if (prev.some(b => b.id === newBook.id)) return prev
+              // Separate remote vs local-only books, then splice in the newcomer
+              const localOnlyIds = new Set(localBooks.map(b => b.id))
+              const remote    = prev.filter(b => !localOnlyIds.has(b.id))
+              const localOnly = prev.filter(b => localOnlyIds.has(b.id))
+              // Insert newBook into the remote portion (keep sorted by year if present)
+              const updatedRemote = [...remote, newBook].sort((a, b) =>
+                (a.year ?? 9999) - (b.year ?? 9999)
+              )
+              return [...updatedRemote, ...localOnly]
+            })
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'books' },
+          ({ new: updated }) => {
+            // Surgical patch — only the changed row re-renders
+            setBooks(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'books' },
+          ({ old: deleted }) => {
+            setBooks(prev => prev.filter(b => b.id !== deleted.id))
+          }
+        )
+        .on('system', {}, (status) => {
+          // If the channel disconnects unexpectedly, re-fetch to catch any
+          // events we may have missed during the gap.
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[books-live] channel issue, re-fetching…', status)
+            initialFetch()
+          }
+        })
+        .subscribe((status, err) => {
+          if (err) console.error('[books-live] subscribe error:', err)
+          // If subscription failed entirely, fall back to polling or log clearly
+          if (status === 'CHANNEL_ERROR') {
+            console.error('[books-live] could not connect to realtime channel')
+          }
+        })
+    }
+
+    initialFetch()
+    subscribe()
+
+    return () => {
+      if (channel) supabase.removeChannel(channel)
+    }
+  }, []) // run once on mount
 
   // ── Ambient colour → CSS vars ─────────────────────────────────────────────
   useEffect(() => {
@@ -116,6 +161,7 @@ export default function MgaLibro() {
   }, [ambColor])
 
   // ── Dust particles ────────────────────────────────────────────────────────
+  // Uses ambColorRef so it reads live colour without restarting the loop.
   useEffect(() => {
     const canvas  = canvasRef.current
     const section = sectionRef.current
@@ -143,7 +189,8 @@ export default function MgaLibro() {
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const { r, g, b } = ambColor
+      // ✅ Fixed: read from ref so particles always use the current hover colour
+      const { r, g, b } = ambColorRef.current
       particles.forEach(p => {
         p.drift += p.driftSpeed
         p.x += p.dx + Math.sin(p.drift) * 0.12
@@ -164,8 +211,7 @@ export default function MgaLibro() {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []) // runs once — reads colour via ref, no restart needed
 
   // ── Book hover ────────────────────────────────────────────────────────────
   const handleBookEnter = useCallback(async (cover) => {
@@ -247,7 +293,6 @@ export default function MgaLibro() {
 
       <div
         className="ml-ambiance"
-        ref={ambianceRef}
         style={{
           background: `radial-gradient(
             ellipse 80% 50% at 50% 20%,

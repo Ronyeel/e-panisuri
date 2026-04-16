@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../API/firebase'
 import './HomePage.css'
 import localBooks from '../data/books.json'
 import { supabase } from '../API/supabase'
 import { useBookPalette } from '../hooks/useBookPalette'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const INTERVAL = 6000
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function randomNext(current, length) {
   if (length <= 1) return 0
@@ -34,36 +35,27 @@ function pairWords(title) {
   return pairs
 }
 
-export default function HomePage() {
+// ─── Component ────────────────────────────────────────────────────────────────
+
+/**
+ * Props:
+ *   isLoggedIn {boolean} — passed down from App so we don't need a second
+ *                          onAuthStateChanged listener here (single source of truth)
+ *   username   {string}  — display name or email from the authenticated user
+ */
+export default function HomePage({ isLoggedIn = false, username = 'Bisita' }) {
   const bgRef     = useRef(null)
   const bannerRef = useRef(null)
   const navigate  = useNavigate()
 
-  const [books, setBooks]           = useState(localBooks)
-  const [index, setIndex]           = useState(() => Math.floor(Math.random() * localBooks.length))
-  const [phase, setPhase]           = useState('idle')
-  const [showSignIn, setShowSignIn] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [username, setUsername]     = useState('Bisita')
+  const [books, setBooks] = useState(localBooks)
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * localBooks.length))
+  const [phase, setPhase] = useState('idle')
 
-  const book = books[index] ?? books[0]
+  const book        = books[index] ?? books[0]
   const { r, g, b } = useBookPalette(book.cover)
 
-  // ── Firebase auth ─────────────────────────────────────────────
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsLoggedIn(true)
-        setUsername(user.displayName || user.email || 'Mambabasa')
-      } else {
-        setIsLoggedIn(false)
-        setUsername('Bisita')
-      }
-    })
-    return () => unsub()
-  }, [])
-
-  // ── Fetch from Supabase and merge with local ──────────────────
+  // ── Fetch Supabase books and merge with local ─────────────────
   useEffect(() => {
     async function fetchBooks() {
       const { data, error } = await supabase
@@ -71,16 +63,16 @@ export default function HomePage() {
         .select('*')
         .order('year', { ascending: true })
 
-      if (!error && data.length > 0) {
-        const supabaseIds = data.map(b => b.id)
-        const localOnly = localBooks.filter(b => !supabaseIds.includes(b.id))
+      if (!error && data?.length > 0) {
+        const supabaseIds = new Set(data.map(b => b.id))
+        const localOnly   = localBooks.filter(b => !supabaseIds.has(b.id))
         setBooks([...data, ...localOnly])
       }
     }
     fetchBooks()
   }, [])
 
-  // ── Random auto-feature ───────────────────────────────────────
+  // ── Auto-feature random book every INTERVAL ms ────────────────
   useEffect(() => {
     const timer = setInterval(() => {
       setPhase('exit')
@@ -93,31 +85,34 @@ export default function HomePage() {
     return () => clearInterval(timer)
   }, [books.length])
 
-  // ── Parallax ──────────────────────────────────────────────────
+  // ── Parallax on school banner ─────────────────────────────────
   useEffect(() => {
     const bg     = bgRef.current
     const banner = bannerRef.current
     if (!bg || !banner) return
 
-    let current = 0, target = 0, rafId = null
+    let current = 0
+    let target  = 0
+    let rafId   = null
+
     const lerp = (a, b, t) => a + (b - a) * t
 
     const getTarget = () => {
-      const rect    = banner.getBoundingClientRect()
-      const viewH   = window.innerHeight
-      const bannerH = rect.height
+      const rect     = banner.getBoundingClientRect()
+      const viewH    = window.innerHeight
+      const bannerH  = rect.height
       const progress = (viewH - rect.top) / (viewH + bannerH)
       return (progress - 0.5) * bannerH * 0.45
     }
 
     const tick = () => {
       current = lerp(current, target, 0.06)
-      bg.style.transform = `translateY(${current.toFixed(2)}px)`
       if (Math.abs(current - target) > 0.05) {
+        bg.style.transform = `translateY(${current.toFixed(2)}px)`
+        rafId = requestAnimationFrame(tick)
+      } else {
         bg.style.transform = `translateY(${target.toFixed(2)}px)`
         rafId = null
-      } else {
-        rafId = requestAnimationFrame(tick)
       }
     }
 
@@ -137,16 +132,16 @@ export default function HomePage() {
   }, [])
 
   // ── Derived state ─────────────────────────────────────────────
+
   const panelClass = phase === 'exit'  ? 'panel--exit'
                    : phase === 'enter' ? 'panel--enter'
                    : ''
 
   const bookClass = [
     'book-stage',
-    phase === 'exit'    ? 'book--exit'
-    : phase === 'enter' ? 'book--enter'
-    : ''
-  ].join(' ').trim()
+    phase === 'exit'  ? 'book--exit' : '',
+    phase === 'enter' ? 'book--enter' : '',
+  ].filter(Boolean).join(' ')
 
   const titleLen   = getTitleLen(book.title)
   const titlePairs = pairWords(book.title)
@@ -154,8 +149,10 @@ export default function HomePage() {
 
   const goToBook = () => {
     if (!hasPdf) return
+    // RequireAuth in App.jsx guards this route — no need to check isLoggedIn here,
+    // but we keep it for an immediate UX response before the route redirect fires.
     if (!isLoggedIn) {
-      setShowSignIn(true)
+      navigate('/login')
       return
     }
     navigate(`/libro/${book.id}`)
@@ -167,9 +164,7 @@ export default function HomePage() {
   return (
     <main className="homepage">
 
-    
-
-      {/* ── Hero ─────────────────────────────────────────────── */}
+      {/* ── Hero ───────────────────────────────────────────────── */}
       <section className="hero" id="home">
 
         <div
@@ -247,7 +242,7 @@ export default function HomePage() {
                   disabled={!hasPdf}
                   style={{
                     opacity: hasPdf ? 1 : 0.4,
-                    cursor: hasPdf ? 'pointer' : 'not-allowed'
+                    cursor:  hasPdf ? 'pointer' : 'not-allowed',
                   }}
                 >
                   <span>{hasPdf ? 'Basahin' : 'Wala pang PDF'}</span>
@@ -258,10 +253,7 @@ export default function HomePage() {
                   </svg>
                 </button>
 
-                <button
-                  className="hero-cta-excerpt"
-                  onClick={goToExcerpt}
-                >
+                <button className="hero-cta-excerpt" onClick={goToExcerpt}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" strokeWidth="2.5"
                     strokeLinecap="round" strokeLinejoin="round">
@@ -275,13 +267,13 @@ export default function HomePage() {
           </div>
 
           <div className="hero-rule" aria-hidden="true">
-            <span /><span className="rule-diamond"></span><span />
+            <span /><span className="rule-diamond" /><span />
           </div>
 
         </div>
       </section>
 
-      {/* ── School Photo Banner ───────────────────────────────── */}
+      {/* ── School Photo Banner ────────────────────────────────── */}
       <section
         className="school-banner"
         ref={bannerRef}
@@ -297,7 +289,10 @@ export default function HomePage() {
         <div className="school-banner__content">
           <h2 className="school-headline">
             Magsulat. Magbasa. Magsuri. <br />
-            <em>Patungo sa Holistikong Kasanayan <br></br>at Kaalamang Panunuri.</em>
+            <em>
+              Patungo sa Holistikong Kasanayan <br />
+              at Kaalamang Panunuri.
+            </em>
           </h2>
         </div>
       </section>
@@ -308,10 +303,7 @@ export default function HomePage() {
         <div className="cta-deco-circle cta-deco--2" aria-hidden="true" />
         <div className="cta-inner">
           <p className="cta-eyebrow">Para sa mga Manunulat at Mambabasa</p>
-          <button
-            className="cta-btn"
-            onClick={() => navigate('/excerpts')}
-          >
+          <button className="cta-btn" onClick={() => navigate('/excerpts')}>
             Basahin ang mga Excerpts
           </button>
         </div>
