@@ -5,6 +5,8 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '../API/supabase'
+import { MdClose, MdAdd, MdEdit, MdDelete, MdSearch, MdFolder, MdInfo, MdHelpOutline, MdExpandMore, MdInventory, MdWarning, MdInbox } from 'react-icons/md'
+import { useUI } from '../context/UIContext'
 import './adminQuiz.css'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -51,43 +53,14 @@ const validateQuestion = (q) => {
 
 // ─── Atoms ───────────────────────────────────────────────────────────────────
 
-const CloseIcon = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-  </svg>
-)
-const PlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-)
-const EditIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-  </svg>
-)
-const DeleteIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="3 6 5 6 21 6"/>
-    <path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-  </svg>
-)
-const SearchIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-)
-const FolderIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-  </svg>
-)
-const InfoIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-  </svg>
-)
+const CloseIcon = ({ size = 18 }) => <MdClose size={size} />
+const PlusIcon = () => <MdAdd size={16} />
+const EditIcon = () => <MdEdit size={16} />
+const DeleteIcon = () => <MdDelete size={16} />
+const SearchIcon = () => <MdSearch size={16} />
+const FolderIcon = () => <MdFolder size={16} />
+const InfoIcon = () => <MdInfo size={16} />
+const HelpIcon = () => <MdHelpOutline size={14} />
 
 const Badge = ({ children, color, bg, border }) => (
   <span style={{
@@ -236,6 +209,7 @@ function QuestionForm({ form, onChange, error }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdminQuizSets() {
+  const { notify, confirm } = useUI()
   // Sets state
   const [sets,        setSets]        = useState([])
   const [loadingSets, setLoadingSets] = useState(true)
@@ -337,12 +311,20 @@ export default function AdminQuizSets() {
 
   const handleDeleteSet = async (id, title, e) => {
     e?.stopPropagation()
-    if (!window.confirm(`Tanggalin ang set na "${title}"?\n\nMatatanggal din ang lahat ng tanong sa loob nito.`)) return
+    const ok = await confirm({
+      title:        `Tanggalin ang "${title}"?`,
+      body:         'Matatanggal din ang lahat ng tanong sa loob nito. Hindi ito maibabalik.',
+      confirmLabel: 'Tanggalin',
+      danger:       true,
+    })
+    if (!ok) return
     const { error } = await supabase.from('quiz_sets').delete().eq('id', id)
-    if (error) { alert('Hindi matanggal. Subukan ulit.') }
-    else {
+    if (error) {
+      notify('Hindi matanggal. Subukan ulit.', 'error')
+    } else {
       setSets(prev => prev.filter(s => s.id !== id))
       if (activeSet?.id === id) setActiveSet(null)
+      notify(`"${title}" ay matagumpay na natanggal.`, 'success')
     }
   }
 
@@ -397,10 +379,21 @@ export default function AdminQuizSets() {
   }
 
   const handleDeleteQ = async (id, text) => {
-    if (!window.confirm(`Tanggalin ang tanong na ito?\n\n"${text}"`)) return
+    const ok = await confirm({
+      title:        'Tanggalin ang tanong na ito?',
+      body:         `"${text.length > 80 ? text.slice(0, 80) + '…' : text}"`,
+      confirmLabel: 'Tanggalin',
+      danger:       true,
+    })
+    if (!ok) return
     const { error } = await supabase.from('quiz_questions').delete().eq('id', id)
-    if (error) { alert('Hindi matanggal. Subukan ulit.') }
-    else { setQuestions(prev => prev.filter(q => q.id !== id)); await fetchSets() }
+    if (error) {
+      notify('Hindi matanggal. Subukan ulit.', 'error')
+    } else {
+      setQuestions(prev => prev.filter(q => q.id !== id))
+      await fetchSets()
+      notify('Tanong ay matagumpay na natanggal.', 'success')
+    }
   }
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -426,10 +419,10 @@ export default function AdminQuizSets() {
   )
 
   const statCards = [
-    { label: 'Kabuuang Set',      val: sets.length,                                                        icon: '📦', accent: '#4fa3e8' },
-    { label: 'Kabuuang Tanong',   val: totalQuestions,                                                     icon: '❓', accent: '#a78bfa' },
-    { label: 'Mga Kategorya',     val: allCategories.length - 1,                                           icon: '🗂️', accent: '#22d3a5' },
-    { label: 'Para sa Pagsusuri', val: sets.filter(s => (s.quiz_questions?.[0]?.count ?? 0) === 0).length, icon: '⚠️', accent: '#f5b942' },
+    { label: 'Kabuuang Set',      val: sets.length,                                                        icon: <MdInventory />, accent: '#4fa3e8' },
+    { label: 'Kabuuang Tanong',   val: totalQuestions,                                                     icon: <MdHelpOutline />, accent: '#a78bfa' },
+    { label: 'Mga Kategorya',     val: allCategories.length - 1,                                           icon: <MdFolder />, accent: '#22d3a5' },
+    { label: 'Para sa Pagsusuri', val: sets.filter(s => (s.quiz_questions?.[0]?.count ?? 0) === 0).length, icon: <MdWarning />, accent: '#f5b942' },
   ]
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -493,8 +486,8 @@ export default function AdminQuizSets() {
             <div className="qz-loading"><div className="qz-spinner" /><span>Naglo-load…</span></div>
           ) : Object.keys(grouped).length === 0 ? (
             <div className="qz-empty-state">
-              <div className="qz-empty-icon">📭</div>
-              <p>Walang set na nahanap.</p>
+              <div className="qz-empty-icon"><MdInbox /></div>
+              <p>Walang mga quiz set na nahanap.</p>
               <button className="qz-btn qz-btn--primary" onClick={openAddSet}>Gumawa ng Set</button>
             </div>
           ) : (
@@ -526,9 +519,7 @@ export default function AdminQuizSets() {
                           <div className="qz-set-card-footer">
                             <DifficultyBadge difficulty={s.difficulty} />
                             <span className="qz-set-q-count">
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                              </svg>
+                              <HelpIcon />
                               {qCount} tanong
                             </span>
                           </div>
@@ -568,8 +559,8 @@ export default function AdminQuizSets() {
               <div className="qz-loading"><div className="qz-spinner" /><span>Naglo-load…</span></div>
             ) : questions.length === 0 ? (
               <div className="qz-empty-state qz-empty-state--sm">
-                <div className="qz-empty-icon">✏️</div>
-                <p>Wala pang tanong.</p>
+                <div className="qz-empty-icon"><MdEdit /></div>
+                <p>Wala pang mga tanong dito.</p>
                 <button className="qz-btn qz-btn--primary qz-btn--sm" onClick={openAddQ}>Magdagdag ng Tanong</button>
               </div>
             ) : (

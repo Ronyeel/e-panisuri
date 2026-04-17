@@ -12,6 +12,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../API/supabase'
+import { MdGrading, MdPeople, MdSearch, MdClose, MdExpandMore, MdAssignment, MdCheckCircle, MdPendingActions, MdAutorenew, MdDoneAll, MdAssessment } from 'react-icons/md'
 import './adminQuiz.css'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -369,13 +370,7 @@ export default function AdminQuizGrading() {
           className={`qz-main-tab${mainTab === 'grading' ? ' qz-main-tab--active' : ''}`}
           onClick={() => { setMainTab('grading'); setActiveAttempt(null) }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
-          </svg>
+          <MdGrading size={18} />
           Grading ng Sanaysay
           {/* Badge always visible — no mainTab guard */}
           {pendingCount > 0 && (
@@ -386,12 +381,7 @@ export default function AdminQuizGrading() {
           className={`qz-main-tab${mainTab === 'responses' ? ' qz-main-tab--active' : ''}`}
           onClick={() => { setMainTab('responses'); setExpandedAttempt(null) }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
+          <MdPeople size={18} />
           Lahat ng Sagot ng Mga Estudyante
         </button>
       </div>
@@ -420,9 +410,7 @@ export default function AdminQuizGrading() {
           {/* Filters */}
           <div className="qz-filters qz-filters--compact">
             <div className="qz-search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
+              <MdSearch size={16} />
               <input
                 className="qz-search"
                 placeholder="Hanapin ang mag-aaral o quiz…"
@@ -450,7 +438,7 @@ export default function AdminQuizGrading() {
                 <div className="qz-loading"><div className="qz-spinner" /><span>Naglo-load…</span></div>
               ) : filteredAttempts.length === 0 ? (
                 <div className="qz-empty-state">
-                  <div className="qz-empty-icon">🎉</div>
+                  <div className="qz-empty-icon"><MdDoneAll /></div>
                   <p>{gradingTab === 'pending' ? 'Wala pang naghihintay na sanaysay.' : 'Wala pang attempt.'}</p>
                 </div>
               ) : (
@@ -497,9 +485,7 @@ export default function AdminQuizGrading() {
                 <div className="qz-qs-header">
                   <div className="qz-qs-header-left">
                     <button className="qz-icon-btn" onClick={() => setActiveAttempt(null)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
+                      <MdClose size={18} />
                     </button>
                     <div>
                       <p className="qz-qs-set-name">{activeAttempt.display_name || 'Anonymous'}</p>
@@ -546,10 +532,10 @@ export default function AdminQuizGrading() {
           {/* Stats */}
           <div className="qz-stats-row" style={{ marginBottom: 20 }}>
             {[
-              { label: 'Kabuuang Attempt',  val: allAttempts.length,                                                icon: '📋', accent: '#4fa3e8' },
-              { label: 'Natapos na',        val: allAttempts.filter(a => a.status === 'completed').length,          icon: '✅', accent: '#22d3a5' },
-              { label: 'Para sa Pagsusuri', val: allAttempts.filter(a => a.status === 'pending_review').length,     icon: '⏳', accent: '#f5b942' },
-              { label: 'In Progress',       val: allAttempts.filter(a => a.status === 'in_progress').length,        icon: '🔄', accent: '#a78bfa' },
+              { label: 'Kabuuang Attempt',  val: allAttempts.length,                                                icon: <MdAssignment />, accent: '#4fa3e8' },
+              { label: 'Natapos na',        val: allAttempts.filter(a => a.status === 'completed').length,          icon: <MdCheckCircle />, accent: '#22d3a5' },
+              { label: 'Para sa Pagsusuri', val: allAttempts.filter(a => a.status === 'pending_review').length,     icon: <MdPendingActions />, accent: '#f5b942' },
+              { label: 'In Progress',       val: allAttempts.filter(a => a.status === 'in_progress').length,        icon: <MdAutorenew />, accent: '#a78bfa' },
             ].map(s => (
               <div className="qz-stat-card" key={s.label} style={{ '--sa': s.accent }}>
                 <span className="qz-stat-icon">{s.icon}</span>
@@ -564,9 +550,7 @@ export default function AdminQuizGrading() {
           {/* Filters */}
           <div className="qz-filters">
             <div className="qz-search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
+              <MdSearch size={16} />
               <input
                 className="qz-search"
                 placeholder="Hanapin ang mag-aaral…"
@@ -597,7 +581,7 @@ export default function AdminQuizGrading() {
             <div className="qz-loading"><div className="qz-spinner" /><span>Naglo-load…</span></div>
           ) : filteredAllAttempts.length === 0 ? (
             <div className="qz-empty-state" style={{ padding: '4rem 2rem' }}>
-              <div className="qz-empty-icon">📊</div>
+              <div className="qz-empty-icon"><MdAssessment /></div>
               <p>Wala pang mga sagot na nahanap.</p>
             </div>
           ) : (
@@ -642,9 +626,7 @@ export default function AdminQuizGrading() {
                         <span className="qz-attempt-date-inline">{date}</span>
                       </div>
                       <div className="qz-expand-icon" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="6 9 12 15 18 9"/>
-                        </svg>
+                        <MdExpandMore size={18} />
                       </div>
                     </div>
 

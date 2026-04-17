@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap');
+
 
 /* ── Variables ────────────────────────────────────────────────────────────── */
 :root {
@@ -27,7 +27,7 @@
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.25s ease, transform 0.25s ease; /* ← faster entry */
@@ -67,7 +67,7 @@
 .fb-header-right { width: 80px; }
 
 .fb-title {
-  font-family: 'Lora', serif;
+  font-family: var(--font-primary);
   font-size: clamp(0.9rem, 1.4vw, 1.05rem);
   color: var(--gold);
   letter-spacing: 0.02em;
@@ -89,7 +89,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -315,7 +315,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -374,7 +374,7 @@
 }
 .fb-error-icon { font-size: 2.5rem; opacity: 0.35; }
 .fb-error-state p {
-  font-family: 'Lora', serif;
+  font-family: var(--font-primary);
   font-style: italic;
   color: var(--muted);
   font-size: 0.95rem;

@@ -11,6 +11,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../API/firebase'
 import { supabase } from '../API/supabase'
+import { useUI } from '../context/UIContext'
 import './profile.css'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -444,7 +445,8 @@ function AttemptRow({ attempt, onReview }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ProfilePage({ onNotify }) {
+export default function ProfilePage() {
+  const { notify, confirm } = useUI()
   const navigate = useNavigate()
   const user     = auth.currentUser
   const nameRef  = useRef(null)
@@ -479,11 +481,11 @@ export default function ProfilePage({ onNotify }) {
     setNameBusy(true)
     try {
       await updateProfile(user, { displayName: nameForm.username.trim() })
-      onNotify?.({ message: 'Matagumpay na napalitan ang iyong Username!', type: 'success' })
+      notify('Matagumpay na napalitan ang iyong Username!', 'success')
     } catch {
       setNameErr({ username: 'Hindi ma-update. Subukang muli.' })
       triggerShake(setNameShake)
-      onNotify?.({ message: 'Hindi ma-update ang username.', type: 'error' })
+      notify('Hindi ma-update ang username.', 'error')
     } finally { setNameBusy(false) }
   }
 
@@ -497,12 +499,12 @@ export default function ProfilePage({ onNotify }) {
       await reauthenticateWithCredential(user, credential)
       await updatePassword(user, passForm.next)
       setPassForm({ current: '', next: '', confirm: '' })
-      onNotify?.({ message: 'Password na-update nang matagumpay!', type: 'success' })
+      notify('Password na-update nang matagumpay!', 'success')
     } catch (err) {
       const isBadPass = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
       setPassErr(isBadPass ? { current: 'Mali ang kasalukuyang password.' } : { confirm: 'May error. Subukan muli.' })
       triggerShake(setPassShake)
-      onNotify?.({ message: 'Hindi ma-update ang password.', type: 'error' })
+      notify('Hindi ma-update ang password.', 'error')
     } finally { setPassBusy(false) }
   }
 

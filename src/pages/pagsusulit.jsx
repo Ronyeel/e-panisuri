@@ -9,6 +9,12 @@ import './pagsusulit.css'
 
 const LETTERS = ['A', 'B', 'C', 'D']
 
+const DIFFICULTY_META = {
+  easy: 'Madali',
+  medium: 'Katamtaman',
+  hard: 'Mahirap'
+}
+
 function getVerdict(score, total) {
   const pct = total > 0 ? score / total : 0
   if (pct === 1)   return 'Perpekto! Tunay kang dalubhasà.'
@@ -48,6 +54,19 @@ export default function Pagsuslit() {
   const [finished,   setFinished]   = useState(false)
   const [hasPending, setHasPending] = useState(false)
 
+  // Filtering state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterDifficulty, setFilterDifficulty] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+
+  const filteredSets = sets.filter(s => {
+    const matchSearch = s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        (s.category && s.category.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchDiff = filterDifficulty ? s.difficulty === filterDifficulty : true;
+    const matchCat = filterCategory ? s.category === filterCategory : true;
+    return matchSearch && matchDiff && matchCat;
+  });
+
   // Pre-fill player name from Firebase
   useEffect(() => {
     const user = auth.currentUser
@@ -63,7 +82,7 @@ export default function Pagsuslit() {
       setLoading(true)
       const { data, error } = await supabase
         .from('quiz_sets')
-        .select('id, title, category, difficulty')
+        .select('*, quiz_questions(count)')
         .order('created_at', { ascending: true })
 
       if (!error && data?.length) {
@@ -251,11 +270,17 @@ export default function Pagsuslit() {
       <div className="pagsuslit-inner">
 
         {/* ── Header ── */}
-        <header className="pagsuslit-header">
-          <div className="pagsuslit-eyebrow">Subukan ang Iyong Kaalaman</div>
-          <h2 className="pagsuslit-title">Pagsuslit</h2>
-          <p className="pagsuslit-subtitle">Piliin ang set at simulan ang pagsusulit</p>
-        </header>
+        {!activeSetId && (
+          <header style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid #333', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#f5c518', color: 'black', padding: '0.6rem 0.8rem', borderRadius: '8px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            </div>
+            <div>
+              <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '2rem', color: '#f5c518', margin: '0 0 0.2rem' }}>Pagsusulit</h2>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: '#aaa', margin: 0 }}>Subukan ang iyong kaalaman sa iba't ibang paksa</p>
+            </div>
+          </header>
+        )}
 
         {/* ── Name prompt modal ── */}
         {namePrompt && (
@@ -288,225 +313,352 @@ export default function Pagsuslit() {
         )}
 
         {/* ── Set selector ── */}
-        {!activeSetId && (
-          <nav className="pagsuslit-selector" aria-label="Mga set ng pagsusulit">
-            {sets.map(s => (
-              <button key={s.id} className="pagsuslit-selector-btn" onClick={() => handleSelectSet(s.id)}>
-                {s.title}
-                {s.category && (
-                  <span style={{ display: 'block', fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-                    {s.category}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        )}
-
-        {/* ── Active quiz ── */}
-        {activeSetId && (
-          <div className="pagsuslit-card" role="main">
-
-            {/* Results screen */}
-            {finished ? (
-              <div className="pagsuslit-results">
-                <div className="pagsuslit-results-label">Iyong Puntos</div>
-                <div className="pagsuslit-results-score">
-                  {score}<span className="pagsuslit-results-denom">/{total}</span>
-                </div>
-                <p className="pagsuslit-results-verdict">{getVerdict(score, total)}</p>
-
-                {hasPending && (
-                  <div style={{
-                    margin: '16px 0', padding: '12px 16px',
-                    background: '#F59E0B18', border: '1px solid #F59E0B44',
-                    borderRadius: 10, color: '#fbbf24',
-                    fontSize: 13, textAlign: 'center', lineHeight: 1.6,
-                  }}>
-                    May mga sanaysay na kailangan pang suriin ng admin.<br />
-                    <span style={{ opacity: 0.7 }}>Ang iyong puntos ay mababago pagkatapos ng pagsusuri.</span>
-                  </div>
-                )}
-
-                <div className="pagsuslit-results-actions">
-                  <button className="pagsuslit-retry-btn" onClick={handleRetry}>↩ Ulit</button>
-                  {sets.length > 1 && (
-                    <button className="pagsuslit-other-btn" onClick={() => { setActiveSetId(null); setFinished(false) }}>
-                      Ibang Set
-                    </button>
-                  )}
-                </div>
+        {!activeSetId && (() => {
+          const allCategories = Array.from(new Set(sets.map(s => s.category).filter(Boolean)));
+          
+          return (
+            <div className="pagsuslit-grid-container">
+              <div className="pagsuslit-search-bar">
+                <span className="search-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </span>
+                <input 
+                  type="text" 
+                  placeholder="Maghanap ng pagsusulit..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div className="pagsuslit-filters">
+                <span className="filter-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <select 
+                  className="pagsuslit-filter-dropdown"
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                >
+                  <option value="">Lahat ng Kategorya</option>
+                  {allCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <select 
+                  className="pagsuslit-filter-dropdown"
+                  value={filterDifficulty}
+                  onChange={e => setFilterDifficulty(e.target.value)}
+                >
+                  <option value="">Lahat ng Difficulty</option>
+                  <option value="easy">Madali</option>
+                  <option value="medium">Katamtaman</option>
+                  <option value="hard">Mahirap</option>
+                </select>
               </div>
 
-            ) : question ? (
-              <>
-                {/* Progress bar */}
-                <div className="pagsuslit-progress">
-                  <div className="pagsuslit-progress-track" role="progressbar" aria-valuenow={currentIndex + 1} aria-valuemin={1} aria-valuemax={total}>
-                    <div className="pagsuslit-progress-fill" style={{ width: `${progressPct}%` }} />
-                  </div>
-                  <div className="pagsuslit-progress-label">
-                    <span>{currentIndex + 1}</span> / {total}
-                  </div>
-                </div>
+              <div className="pagsuslit-results-count">
+                Nahanap: <span>{filteredSets.length}</span> na Pagsusulit
+              </div>
 
-                {/* Question type badge */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
-                  <span style={{
-                    padding: '2px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
-                    background: question.type === 'essay' ? '#8B5CF622' : question.type === 'true_false' ? '#10B98122' : '#3B82F622',
-                    color:      question.type === 'essay' ? '#a78bfa'   : question.type === 'true_false' ? '#34d399'   : '#60a5fa',
-                    border: `1px solid ${question.type === 'essay' ? '#8B5CF644' : question.type === 'true_false' ? '#10B98144' : '#3B82F644'}`,
-                  }}>
-                    {question.type === 'essay' ? 'Sanaysay' : question.type === 'true_false' ? 'Tama o Mali' : 'Multiple Choice'}
-                  </span>
-                </div>
-
-                {/* Question text */}
-                <div className="pagsuslit-question-wrap">
-                  <div className="pagsuslit-question-num">Tanong {currentIndex + 1}</div>
-                  <p className="pagsuslit-question-text">{question.question}</p>
-                </div>
-
-                {/* Multiple choice */}
-                {question.type === 'multiple_choice' && (
-                  <div className="pagsuslit-choices" role="list">
-                    {(question.choices ?? []).map((choice, idx) => {
-                      let stateClass = ''
-                      if (answered) {
-                        if (idx === question.correct_index) stateClass = ' revealed'
-                        else if (idx === selectedIdx)       stateClass = ' wrong'
-                      } else if (idx === selectedIdx) {
-                        stateClass = ' selected'
-                      }
-                      return (
-                        <button
-                          key={idx} role="listitem"
-                          className={`pagsuslit-choice${stateClass}`}
-                          onClick={() => handleChoose(idx)}
-                          disabled={answered}
-                          aria-pressed={selectedIdx === idx}
-                        >
-                          <span className="pagsuslit-choice-letter">{LETTERS[idx]}</span>
-                          <span className="pagsuslit-choice-text">{choice}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* True / False */}
-                {question.type === 'true_false' && (
-                  <div className="pagsuslit-choices" role="list">
-                    {[true, false].map((val, idx) => {
-                      let stateClass = ''
-                      if (answered) {
-                        if (val === question.correct_tf) stateClass = ' revealed'
-                        else if (val === selectedTF)     stateClass = ' wrong'
-                      } else if (val === selectedTF) {
-                        stateClass = ' selected'
-                      }
-                      return (
-                        <button
-                          key={String(val)} role="listitem"
-                          className={`pagsuslit-choice${stateClass}`}
-                          onClick={() => handleChooseTF(val)}
-                          disabled={answered}
-                          aria-pressed={selectedTF === val}
-                        >
-                          <span className="pagsuslit-choice-letter">{idx === 0 ? 'T' : 'F'}</span>
-                          <span className="pagsuslit-choice-text">{val ? 'Tama (True)' : 'Mali (False)'}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Essay */}
-                {question.type === 'essay' && (
-                  <div style={{ marginTop: 16 }}>
-                    {!answered ? (
-                      <textarea
-                        value={essayText}
-                        onChange={e => setEssayText(e.target.value)}
-                        rows={5}
-                        style={{
-                          width: '100%', boxSizing: 'border-box',
-                          background: 'var(--bg-input, #1a1a2e)',
-                          border: '1.5px solid var(--border, #ffffff18)',
-                          borderRadius: 10,
-                          color: 'var(--text-primary, #e0e0e0)',
-                          fontSize: 15, lineHeight: 1.7,
-                          padding: '12px 14px',
-                          resize: 'vertical', fontFamily: 'inherit', outline: 'none',
-                          transition: 'border-color 0.2s',
-                        }}
-                        onFocus={e  => { e.target.style.borderColor = 'rgba(99,102,241,0.6)' }}
-                        onBlur={e   => { e.target.style.borderColor = 'var(--border, #ffffff18)' }}
-                        placeholder="Isulat ang iyong sagot dito..."
-                      />
-                    ) : (
-                      <div style={{
-                        padding: '12px 14px', background: '#6366f112',
-                        border: '1.5px solid #6366f130', borderRadius: 10,
-                        color: '#c4b5fd', fontSize: 14, lineHeight: 1.7,
-                      }}>
-                        {essayText}
+              <div className="pagsuslit-grid">
+                {filteredSets.map(s => {
+                  // Determine difficulty safely or default to 'medium'
+                  const diffVal = s.difficulty || 'medium';
+                  const diffLabel = DIFFICULTY_META[diffVal] || 'Katamtaman';
+                  const diffClass = `diff-${diffVal}`;
+                  
+                  // Dynamic metadata
+                  const qCount = s.quiz_questions?.[0]?.count ?? 0;
+                  const category = s.category || 'iba\'t ibang paksa';
+                  
+                  return (
+                    <div key={s.id} className="pagsuslit-grid-card">
+                      <div className="card-top-bar"></div>
+                      <div className="card-header">
+                        <h3 className="card-title">{s.title}</h3>
+                        <span className={`card-badge ${diffClass}`}>{diffLabel}</span>
                       </div>
+                      <p className="card-subtitle">
+                        {s.description || `Subukan ang iyong kaalaman sa mga pangunahing konsepto ng ${category}.`}
+                      </p>
+                      
+                      <div className="card-meta">
+                        <span className="meta-item">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                          {qCount} tanong
+                        </span>
+                        <span className="meta-item">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                          {s.category || 'General'}
+                        </span>
+                      </div>
+
+                      <div className="card-footer-action">
+                        <button className="card-action-btn" onClick={() => handleSelectSet(s.id)}>
+                          Magsimula
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+
+        {/* ── Active quiz ── */}
+        {activeSetId && (() => {
+          const activeSet = sets.find(s => s.id === activeSetId);
+          
+          return (
+            <div className="pagsuslit-taking-container" role="main">
+
+              {/* Results screen */}
+              {finished ? (
+                <div className="pagsuslit-card pagsuslit-results">
+                  <div className="pagsuslit-results-label">Iyong Puntos</div>
+                  <div className="pagsuslit-results-score">
+                    {score}<span className="pagsuslit-results-denom">/{total}</span>
+                  </div>
+                  <p className="pagsuslit-results-verdict">{getVerdict(score, total)}</p>
+
+                  {hasPending && (
+                    <div style={{
+                      margin: '16px 0', padding: '12px 16px',
+                      background: '#F59E0B18', border: '1px solid #F59E0B44',
+                      borderRadius: 10, color: '#fbbf24',
+                      fontSize: 13, textAlign: 'center', lineHeight: 1.6,
+                    }}>
+                      May mga sanaysay na kailangan pang suriin ng admin.<br />
+                      <span style={{ opacity: 0.7 }}>Ang iyong puntos ay mababago pagkatapos ng pagsusuri.</span>
+                    </div>
+                  )}
+
+                  <div className="pagsuslit-results-actions">
+                    <button className="pagsuslit-retry-btn" onClick={handleRetry}>↩ Ulit</button>
+                    {sets.length > 1 && (
+                      <button className="pagsuslit-other-btn" onClick={() => { setActiveSetId(null); setFinished(false) }}>
+                        Ibang Set
+                      </button>
                     )}
                   </div>
-                )}
-
-                {/* Explanation (MC / TF) */}
-                {answered && question.explanation && question.type !== 'essay' && (
-                  <div className="pagsuslit-explanation" role="alert">
-                    <span className="pagsuslit-explanation-icon">
-                      {(selectedIdx === question.correct_index || selectedTF === question.correct_tf) ? '✓' : '✕'}
-                    </span>
-                    <p className="pagsuslit-explanation-text">{question.explanation}</p>
-                  </div>
-                )}
-
-                {/* Essay submitted notice */}
-                {answered && question.type === 'essay' && (
-                  <div className="pagsuslit-explanation" role="alert" style={{ borderColor: '#6366f144', background: '#6366f112' }}>
-                    <span className="pagsuslit-explanation-icon" style={{ color: '#a78bfa' }}>✎</span>
-                    <p className="pagsuslit-explanation-text" style={{ color: '#c4b5fd' }}>
-                      Ang iyong sagot ay nai-submit na. Susuriin ito ng admin.
-                    </p>
-                  </div>
-                )}
-
-                {/* Card footer */}
-                <div className="pagsuslit-card-footer">
-                  <div className="pagsuslit-score-inline">Puntos: <span>{score}</span></div>
-                  {!answered ? (
-                    <button
-                      className="pagsuslit-next-btn"
-                      onClick={handleSubmitAnswer}
-                      disabled={
-                        question.type === 'multiple_choice' ? selectedIdx === null :
-                        question.type === 'true_false'      ? selectedTF  === null :
-                        !essayText.trim()
-                      }
-                    >
-                      Isumite →
-                    </button>
-                  ) : (
-                    <button className="pagsuslit-next-btn" onClick={handleNext}>
-                      {currentIndex + 1 >= total ? 'Tingnan ang Resulta →' : 'Susunod →'}
-                    </button>
-                  )}
                 </div>
-              </>
 
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontFamily: "'Crimson Text', serif", textAlign: 'center', padding: '2rem 0' }}>
-                Walang mga tanong para sa set na ito.
-              </p>
-            )}
-          </div>
-        )}
+              ) : question ? (
+                <>
+                  {/* New Quiz Header */}
+                  <div className="quiz-header-layout">
+                    <div className="quiz-header-left">
+                      <div className="quiz-header-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                      </div>
+                      <div>
+                        <h2 className="quiz-header-title">{activeSet?.title}</h2>
+                        <p className="quiz-header-subtitle">{activeSet?.category || 'Walang kategorya'}</p>
+                      </div>
+                    </div>
+                    <button className="quiz-back-btn" onClick={() => { setActiveSetId(null); setFinished(false); }}>
+                      ← Bumalik
+                    </button>
+                  </div>
+
+                  <div className="pagsuslit-taking-layout">
+                    {/* Left Panel - Question & Answers */}
+                    <div className="pagsuslit-taking-main">
+                      <div className="quiz-badge">Tanong {currentIndex + 1}</div>
+                      
+                      <div className="pagsuslit-question-wrap">
+                        <p className="pagsuslit-question-text">{question.question}</p>
+                      </div>
+
+                      {/* Multiple choice */}
+                      {question.type === 'multiple_choice' && (
+                        <div className="pagsuslit-choices" role="list">
+                          {(question.choices ?? []).map((choice, idx) => {
+                            let stateClass = ''
+                            if (answered) {
+                              if (idx === question.correct_index) stateClass = ' revealed'
+                              else if (idx === selectedIdx)       stateClass = ' wrong'
+                            } else if (idx === selectedIdx) {
+                              stateClass = ' selected'
+                            }
+                            return (
+                              <button
+                                key={idx} role="listitem"
+                                className={`pagsuslit-choice${stateClass}`}
+                                onClick={() => handleChoose(idx)}
+                                disabled={answered}
+                                aria-pressed={selectedIdx === idx}
+                              >
+                                <span className="pagsuslit-choice-letter">{LETTERS[idx]}</span>
+                                <span className="pagsuslit-choice-text">{choice}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* True / False */}
+                      {question.type === 'true_false' && (
+                        <div className="pagsuslit-choices" role="list">
+                          {[true, false].map((val, idx) => {
+                            let stateClass = ''
+                            if (answered) {
+                              if (val === question.correct_tf) stateClass = ' revealed'
+                              else if (val === selectedTF)     stateClass = ' wrong'
+                            } else if (val === selectedTF) {
+                              stateClass = ' selected'
+                            }
+                            return (
+                              <button
+                                key={String(val)} role="listitem"
+                                className={`pagsuslit-choice${stateClass}`}
+                                onClick={() => handleChooseTF(val)}
+                                disabled={answered}
+                                aria-pressed={selectedTF === val}
+                              >
+                                <span className="pagsuslit-choice-letter">{idx === 0 ? 'T' : 'F'}</span>
+                                <span className="pagsuslit-choice-text">{val ? 'Tama (True)' : 'Mali (False)'}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Essay */}
+                      {question.type === 'essay' && (
+                        <div style={{ marginTop: 16 }}>
+                          {!answered ? (
+                            <textarea
+                              value={essayText}
+                              onChange={e => setEssayText(e.target.value)}
+                              rows={5}
+                              style={{
+                                width: '100%', boxSizing: 'border-box',
+                                background: 'var(--bg-input, #1a1a2e)',
+                                border: '1.5px solid var(--border, #ffffff18)',
+                                borderRadius: 10,
+                                color: 'var(--text-primary, #e0e0e0)',
+                                fontSize: 15, lineHeight: 1.7,
+                                padding: '12px 14px',
+                                resize: 'vertical', fontFamily: 'inherit', outline: 'none',
+                                transition: 'border-color 0.2s',
+                              }}
+                              onFocus={e  => { e.target.style.borderColor = 'rgba(99,102,241,0.6)' }}
+                              onBlur={e   => { e.target.style.borderColor = 'var(--border, #ffffff18)' }}
+                              placeholder="Isulat ang iyong sagot dito..."
+                            />
+                          ) : (
+                            <div style={{
+                              padding: '12px 14px', background: '#6366f112',
+                              border: '1.5px solid #6366f130', borderRadius: 10,
+                              color: '#c4b5fd', fontSize: 14, lineHeight: 1.7,
+                            }}>
+                              {essayText}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Explanation (MC / TF) */}
+                      {answered && question.explanation && question.type !== 'essay' && (
+                        <div className="pagsuslit-explanation" role="alert" style={{ marginTop: '1.5rem' }}>
+                          <span className="pagsuslit-explanation-icon">
+                            {(selectedIdx === question.correct_index || selectedTF === question.correct_tf) ? '✓' : '✕'}
+                          </span>
+                          <p className="pagsuslit-explanation-text">{question.explanation}</p>
+                        </div>
+                      )}
+
+                      {/* Essay submitted notice */}
+                      {answered && question.type === 'essay' && (
+                        <div className="pagsuslit-explanation" role="alert" style={{ marginTop: '1.5rem', borderColor: '#6366f144', background: '#6366f112' }}>
+                          <span className="pagsuslit-explanation-icon" style={{ color: '#a78bfa' }}>✎</span>
+                          <p className="pagsuslit-explanation-text" style={{ color: '#c4b5fd' }}>
+                            Ang iyong sagot ay nai-submit na. Susuriin ito ng admin.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Card footer / Actions */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3rem' }}>
+                        <button 
+                          className="pagsuslit-prev-btn" 
+                          disabled={true} 
+                        >
+                          &lt; Nakaraan
+                        </button>
+                        
+                        {!answered ? (
+                          <button
+                            className="pagsuslit-next-btn"
+                            onClick={handleSubmitAnswer}
+                            disabled={
+                              question.type === 'multiple_choice' ? selectedIdx === null :
+                              question.type === 'true_false'      ? selectedTF  === null :
+                              !essayText.trim()
+                            }
+                          >
+                            Isumite
+                          </button>
+                        ) : (
+                          <button className="pagsuslit-next-btn" onClick={handleNext}>
+                            {currentIndex + 1 >= total ? 'Tingnan ang Resulta >' : 'Susunod >'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Panel - Sidebar */}
+                    <div className="pagsuslit-taking-sidebar">
+                      <h3 className="sidebar-title">Mga Tanong</h3>
+                      <div className="sidebar-grid">
+                        {Array.from({ length: total }).map((_, i) => {
+                          const isCurrent = i === currentIndex;
+                          const isCompleted = i < currentIndex || (i === currentIndex && answered);
+                          
+                          let className = 'sidebar-circle';
+                          if (isCompleted) className += ' completed';
+                          else if (isCurrent) className += ' current';
+                          
+                          return (
+                            <div key={i} className={className}>
+                              {isCompleted ? (
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              ) : (
+                                i + 1
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="sidebar-summary">
+                        <div className="sidebar-summary-row">
+                          <span>Nasagot:</span>
+                          <span style={{ color: 'var(--gold)' }}>{currentIndex + (answered ? 1 : 0)} / {total}</span>
+                        </div>
+                        <div className="sidebar-summary-row">
+                          <span>Progress:</span>
+                          <span>{Math.round(((currentIndex + (answered ? 1 : 0)) / total) * 100)}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </>
+
+              ) : (
+                <div className="pagsuslit-card">
+                  <p style={{ color: 'var(--text-muted)', fontFamily: "'Crimson Text', serif", textAlign: 'center', padding: '2rem 0' }}>
+                    Walang mga tanong para sa set na ito.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <style>{`

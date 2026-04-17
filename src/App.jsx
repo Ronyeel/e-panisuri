@@ -7,13 +7,13 @@ import { auth, db } from './API/firebase';
 import NavBar            from './components/NavBar';
 import Footer            from './components/Footer';
 import Sidebar           from './components/SideBar';
-import Notification      from './components/notification';
 import AdminToggleButton from './admin/AdminToggleButton';
 import AdminRoute        from './admin/adminRoute';
 import AdminLayout       from './admin/adminLayout';
 import AdminDashboard    from './admin/adminDashboard';
 import AdminBooks        from './admin/adminBooks';
 import AdminExcerpts     from './admin/adminExcerpts';
+import { UIProvider }    from './context/UIContext';
 
 // ── New quiz admin pages (sets + grading) ─────────────────────
 import AdminQuizSets    from './admin/adminQuizSets';
@@ -89,7 +89,7 @@ function useHideChrome() {
 }
 
 // ─── Layout ───────────────────────────────────────────────────
-function Layout({ notif, setNotif, user, authReady }) {
+function Layout({ user, authReady }) {
   const hideChrome = useHideChrome();
 
   const [isMinimized, setIsMinimized] = useState(
@@ -106,12 +106,6 @@ function Layout({ notif, setNotif, user, authReady }) {
 
   return (
     <>
-      <Notification
-        message={notif?.message}
-        type={notif?.type}
-        onClose={() => setNotif(null)}
-      />
-
       {!hideChrome && <NavBar isLoggedIn={isLoggedIn} username={username} />}
 
       <div className={hideChrome ? '' : 'app-shell'}>
@@ -138,7 +132,7 @@ function Layout({ notif, setNotif, user, authReady }) {
               path="/login"
               element={
                 <RedirectIfAuthed user={user} authReady={authReady}>
-                  <Login onNotify={setNotif} />
+                  <Login />
                 </RedirectIfAuthed>
               }
             />
@@ -146,7 +140,7 @@ function Layout({ notif, setNotif, user, authReady }) {
               path="/register"
               element={
                 <RedirectIfAuthed user={user} authReady={authReady}>
-                  <Registration onNotify={setNotif} />
+                  <Registration />
                 </RedirectIfAuthed>
               }
             />
@@ -189,7 +183,7 @@ function Layout({ notif, setNotif, user, authReady }) {
               { path: '/pagsusulit', element: <Pagsuslit /> },   // ← new player quiz
               { path: '/magsuri',    element: <MagsuriTayo /> },
               { path: '/teorya',     element: <TeoryangPampanitikan /> },
-              { path: '/profile',    element: <ProfilePage onNotify={setNotif} /> },
+              { path: '/profile',    element: <ProfilePage /> },
             ].map(({ path, element }) => (
               <Route
                 key={path}
@@ -224,7 +218,6 @@ function Layout({ notif, setNotif, user, authReady }) {
 
 // ─── Root ─────────────────────────────────────────────────────
 export default function App() {
-  const [notif,     setNotif]     = useState(null);
   const [user,      setUser]      = useState(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -237,13 +230,13 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Layout
-        notif={notif}
-        setNotif={setNotif}
-        user={user}
-        authReady={authReady}
-      />
-    </BrowserRouter>
+    <UIProvider>
+      <BrowserRouter>
+        <Layout
+          user={user}
+          authReady={authReady}
+        />
+      </BrowserRouter>
+    </UIProvider>
   );
 }

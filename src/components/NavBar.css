@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Barlow+Condensed:wght@600;700&family=Crimson+Text:wght@600&display=swap');
+
 
 :root {
   --gold:       #f5c518;
@@ -31,7 +31,7 @@
 .navbar-inner {
   
   padding: 0 1.5rem 0 0;    /* ← no left padding; logo block handles it */
-  height: 62px;
+  height: var(--navbar-h);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -45,15 +45,15 @@
   gap: 1px;
   line-height: 1;
   flex-shrink: 0;
-  width: 210px;              /* ← matches sidebar width exactly */
-  padding-left: 20px;        /* ← matches sidebar link padding */
+  width: var(--sidebar-w);           /* ← matches sidebar width dynamically */
+  padding-left: clamp(10px, 1.5vw, 20px);
   transition: opacity 0.2s;
 }
 
 .navbar-logo:hover { opacity: 0.85; }
 
 .logo-line1 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.28em;
@@ -63,7 +63,7 @@
 }
 
 .logo-line2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-accent);
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.07em;
@@ -75,7 +75,7 @@
 /* ── Search bar — desktop ─────────────────────────────────── */
 .navbar-search {
   flex: 1;
-  max-width: 340px;
+  max-width: clamp(200px, 30vw, 400px);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -104,7 +104,7 @@
   border: none;
   outline: none;
   color: var(--text);
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-primary);
   font-size: 0.9rem;
   letter-spacing: 0.04em;
   width: 100%;
@@ -152,19 +152,31 @@
 /* ── Mobile search expand bar ─────────────────────────────── */
 .navbar-search-mobile {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
   align-items: center;
   gap: 10px;
-  padding: 0 1.5rem;
+  padding: 10px 1.5rem;
   background: var(--black);
   border-top: 1px solid rgba(245, 197, 24, 0.1);
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.25s ease, padding 0.25s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transform-origin: top;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .navbar-search-mobile--open {
-  max-height: 56px;
-  padding: 10px 1.5rem;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .navbar-search-input-mobile {
@@ -173,7 +185,7 @@
   border: none;
   outline: none;
   color: var(--text);
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-primary);
   font-size: 1rem;
   appearance: none;
 }
@@ -284,7 +296,7 @@
 }
 
 .magsuri-tooltip-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -302,7 +314,7 @@
   border: 1px solid var(--border-sub);
   border-radius: 99px;
   cursor: pointer;
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-primary);
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -388,19 +400,35 @@
 /* ── Mobile nav drawer ────────────────────────────────────── */
 .navbar-mobile {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
   flex-direction: column;
   background: #0f0f0f;
   border-top: 1px solid rgba(245, 197, 24, 0.1);
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.35s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  
+  /* Performant Hardware-Accelerated Animations */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transform-origin: top;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
-.navbar-mobile--open { max-height: 420px; }
+.navbar-mobile--open { 
+  opacity: 1; 
+  visibility: visible;
+  transform: translateY(0); 
+}
 
 .navbar-mobile-link {
   padding: 0.9rem 1.5rem;
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-primary);
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.07em;
@@ -411,13 +439,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: color 0.2s, background 0.2s, padding-left 0.2s;
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+  will-change: transform;
 }
 
 .navbar-mobile-link:hover {
   color: var(--gold);
   background: var(--gold-dim);
-  padding-left: 2rem;
+  transform: translateX(0.5rem);
 }
 
 .navbar-mobile-link.navbar-link--active {
@@ -520,7 +549,7 @@
 }
 
 .pagsusulit-tooltip-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -530,6 +559,7 @@
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .navbar-logo        { width: auto; flex-shrink: 1; padding-left: 1.5rem; }
   .navbar-search      { display: none; }
   .navbar-search-btn  { display: flex; }
   .navbar-search-mobile { display: flex; }

@@ -1,10 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@600&family=Barlow+Condensed:wght@600;700&display=swap');
+
 
 :root {
-  --sidebar-w:      210px;
-  --sidebar-w-min:  68px;
-  --navbar-h:       62px;
-
   --gold:           #f5c518;
   --gold-dim:       rgba(245, 197, 24, 0.12);
   --black:          #0d0d0d;
@@ -109,7 +105,7 @@ footer.with-sidebar {
   align-items: center;
   gap: 12px;
   padding: 12px 10px;
-  font-family: 'Crimson Text', serif;
+  font-family: var(--font-primary);
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;

@@ -1,0 +1,205 @@
+/* ── Toast Stack ──────────────────────────────────────────────────────── */
+
+.ui-toast-stack {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.ui-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  min-width: 280px;
+  max-width: 380px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05);
+  font-family: var(--font-primary, 'Crimson Text', serif);
+  font-size: 1rem;
+  pointer-events: auto;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  will-change: opacity, transform;
+}
+
+.ui-toast--show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.ui-toast--hide {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.97);
+  pointer-events: none;
+}
+
+.ui-toast--success {
+  background: #0f1f0f;
+  color: #6fcf6f;
+  border: 1px solid rgba(111,207,111,0.2);
+}
+.ui-toast--error {
+  background: #1f0f0f;
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.2);
+}
+.ui-toast--info {
+  background: #0f1520;
+  color: #60a5fa;
+  border: 1px solid rgba(96,165,250,0.2);
+}
+
+.ui-toast-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+}
+.ui-toast-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-toast-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.ui-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  padding: 0;
+  line-height: 1;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.ui-toast-close:hover { opacity: 1; }
+
+/* ── Confirm Dialog ───────────────────────────────────────────────────── */
+
+.ui-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+  animation: ui-backdrop-in 0.2s ease;
+}
+@keyframes ui-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ui-dialog {
+  background: #141414;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-top: 2px solid var(--gold, #f5c518);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+  animation: ui-dialog-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes ui-dialog-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+.ui-dialog-header {
+  padding: 22px 24px 0;
+}
+.ui-dialog-title {
+  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-size: 1.3rem;
+  letter-spacing: 0.12em;
+  color: #e8e0cc;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.ui-dialog-body {
+  padding: 12px 24px 0;
+  font-family: var(--font-primary, 'Crimson Text', serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(232,224,204,0.7);
+  margin: 0;
+}
+
+.ui-dialog-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+}
+
+.ui-dialog-btn {
+  padding: 9px 22px;
+  border-radius: 6px;
+  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.ui-dialog-btn--cancel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(232,224,204,0.6);
+}
+.ui-dialog-btn--cancel:hover {
+  border-color: rgba(255,255,255,0.25);
+  color: #e8e0cc;
+}
+
+.ui-dialog-btn--confirm {
+  background: var(--gold, #f5c518);
+  color: #0a0a0a;
+}
+.ui-dialog-btn--confirm:hover {
+  background: #ffd34d;
+}
+
+.ui-dialog-btn--danger {
+  background: var(--red, #bf1e2e);
+  color: #fff;
+}
+.ui-dialog-btn--danger:hover {
+  background: #d4263a;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ui-toast-stack {
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+  .ui-toast {
+    min-width: unset;
+    max-width: 100%;
+  }
+  .ui-dialog-footer {
+    flex-direction: column-reverse;
+  }
+  .ui-dialog-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

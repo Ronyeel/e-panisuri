@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../API/firebase'
+import { useUI } from '../context/UIContext'
 import './auth.css'
 
 function firebaseError(code) {
@@ -14,7 +15,8 @@ function firebaseError(code) {
   }
 }
 
-export default function Registration({ onNotify }) {
+export default function Registration() {
+  const { notify } = useUI()
   const navigate = useNavigate()
   const firstRef = useRef(null)
 
@@ -81,7 +83,7 @@ export default function Registration({ onNotify }) {
         kurso:     form.kurso,
         createdAt: new Date(),
       })
-      onNotify?.({ message: `Maligayang pagdating, ${form.username}! Matagumpay kang nagrehistro.`, type: 'success' })
+      notify(`Maligayang pagdating, ${form.username}! Matagumpay kang nagrehistro.`, 'success')
       navigate('/', { replace: true })
     } catch (err) {
       setErrors({ email: firebaseError(err.code) })
@@ -108,13 +110,14 @@ export default function Registration({ onNotify }) {
     <div className="auth-root">
       <div className={`auth-card${shake ? ' auth-card--shake' : ''}`}>
         <div className="auth-brand">
-          <div className="auth-brand-name">E-PANISURI</div>
-          <div className="auth-logo-box">LOGO HERE</div>
+          <div className="auth-hero-image"></div>
         </div>
         <div className="auth-right">
-          <h1 className="auth-heading">Gumawa ng Account</h1>
-          <p className="auth-greeting">Maligayang pagdating! Simulan natin ang inyong paglalakbay sa E-Panisuri.</p>
-          <p className="auth-section-label">Impormasyon</p>
+          <div className="auth-header-center">
+            <h1 className="auth-heading">Gumawa ng Account</h1>
+            <p className="auth-greeting">Maligayang pagdating! Simulan natin ang inyong paglalakbay sa PANURI.</p>
+          </div>
+          <p className="auth-section-label">IMPORMASYON NG ACCOUNT</p>
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
 
             {/* Username */}

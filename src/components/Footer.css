@@ -40,7 +40,7 @@
 }
 
 .footer-site-name {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1.3rem, 2.5vw, 1.8rem);
   letter-spacing: 0.08em;
   color: #fff;
@@ -49,7 +49,7 @@
 }
 
 .footer-tagline {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.65rem, 1.2vw, 0.78rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -58,7 +58,7 @@
 
 /* ── Column label ──────────────────────────────────────────── */
 .footer-col-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -76,7 +76,7 @@
 }
 
 .footer-nav-link {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.82rem, 1.4vw, 0.95rem);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -143,7 +143,7 @@
 
 .footer-copy,
 .footer-credit {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.65rem, 1.2vw, 0.75rem);
   letter-spacing: 0.1em;
   color: #3a3530;

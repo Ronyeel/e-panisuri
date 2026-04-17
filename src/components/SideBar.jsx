@@ -67,12 +67,12 @@ export default function Sidebar({ isMinimized, setIsMinimized, isOpenMobile, set
 function getDefaultIcon(label) {
   const map = {
     'Home': <MdHome />,
-    'Mga Libro': <MdMenuBook />,
+    'Mga Aklat': <MdMenuBook />,
     'Pagsusuri': <MdSearch />,
     'Teoryang Pampanitikan': <MdLibraryBooks />,
     'Bagong Pamantayan': <MdStraighten />,
     'Tungkol Sa Amin': <MdInfo />,
   };
 
-  return map[label] || <span>●</span>;
+  return map[label];
 }

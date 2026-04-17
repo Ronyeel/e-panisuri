@@ -1,6 +1,8 @@
 // adminBooks.jsx
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../API/supabase'
+import { MdAdd, MdSearch, MdLibraryBooks, MdPictureAsPdf, MdOutlineDescription } from 'react-icons/md'
+import { useUI } from '../context/UIContext'
 
 // ─────────────────────────────────────────────
 // Supabase storage bucket names — adjust if yours differ
@@ -67,8 +69,8 @@ async function appendToLocalJson(entry) {
   }
 }
 
-// ─────────────────────────────────────────────
 export default function AdminBooks() {
+  const { notify, confirm } = useUI()
   const [books,   setBooks]   = useState([])
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
@@ -225,10 +227,20 @@ export default function AdminBooks() {
 
   // ── delete ─────────────────────────────────
   const handleDelete = async (id, title) => {
-    if (!window.confirm(`Tanggalin ang "${title}"?`)) return
+    const ok = await confirm({
+      title:        `Tanggalin ang "${title}"?`,
+      body:         'Permanente itong matatanggal. Hindi ito maibabalik.',
+      confirmLabel: 'Tanggalin',
+      danger:       true,
+    })
+    if (!ok) return
     const { error } = await supabase.from('books').delete().eq('id', id)
-    if (error) { alert('Hindi matanggal. Subukan ulit.') }
-    else { setBooks(prev => prev.filter(b => b.id !== id)) }
+    if (error) {
+      notify('Hindi matanggal. Subukan ulit.', 'error')
+    } else {
+      setBooks(prev => prev.filter(b => b.id !== id))
+      notify(`"${title}" ay matagumpay na natanggal.`, 'success')
+    }
   }
 
   // ── filter ─────────────────────────────────
@@ -249,10 +261,7 @@ export default function AdminBooks() {
           <h1 className="ep-page-title">Books</h1>
         </div>
         <button className="ep-btn ep-btn--primary" onClick={openAdd}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+          <MdAdd size={16} />
           Magdagdag
         </button>
       </div>
@@ -260,11 +269,12 @@ export default function AdminBooks() {
       {/* Stats */}
       <div className="ep-stats-grid">
         {[
-          { label: 'Kabuuan', val: books.length,                           accent: '#6c63ff' },
-          { label: 'May PDF', val: books.filter(b => b.pdf).length,        accent: '#22d3a5' },
-          { label: 'Excerpt', val: books.filter(b => b.is_excerpt).length, accent: '#f5b942' },
+          { label: 'Kabuuan', val: books.length,                           icon: <MdLibraryBooks />, accent: '#6c63ff' },
+          { label: 'May PDF', val: books.filter(b => b.pdf).length,        icon: <MdPictureAsPdf />, accent: '#22d3a5' },
+          { label: 'Excerpt', val: books.filter(b => b.is_excerpt).length, icon: <MdOutlineDescription />, accent: '#f5b942' },
         ].map(s => (
           <div className="ep-stat-card" key={s.label} style={{ '--accent': s.accent }}>
+            <div className="ep-stat-icon">{s.icon}</div>
             <div>
               <p className="ep-stat-label">{s.label}</p>
               <p className="ep-stat-val">{s.val}</p>
@@ -278,10 +288,7 @@ export default function AdminBooks() {
         <div className="ep-card-header">
           <h2 className="ep-card-title">Lahat ng Libro</h2>
           <div className="ep-search-wrap">
-            <svg className="ep-search-icon" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <MdSearch size={16} className="ep-search-icon" />
             <input className="ep-search" placeholder="Hanapin ang libro…"
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>

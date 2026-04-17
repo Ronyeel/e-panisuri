@@ -1,73 +1,37 @@
 // AdminLayout.jsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../API/firebase'
+import { supabase } from '../API/supabase'
+import { MdDashboard, MdMenuBook, MdQuiz, MdGrading, MdArticle, MdChevronLeft, MdChevronRight, MdLogout } from 'react-icons/md'
 import './admin.css'
 
 const NAV_ITEMS = [
   {
     path: '/admin',
     label: 'Dashboard',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1"/>
-        <rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="14" y="14" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/>
-      </svg>
-    ),
+    icon: <MdDashboard size={20} />,
   },
   {
     path: '/admin/books',
     label: 'Books',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-      </svg>
-    ),
+    icon: <MdMenuBook size={20} />,
   },
   {
     path: '/admin/quiz',
     label: 'Quiz',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-    ),
+    icon: <MdQuiz size={20} />,
   },
   {
     path: '/admin/quiz/grading',
     label: 'Grading',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-    ),
+    icon: <MdGrading size={20} />,
   },
   {
     path: '/admin/excerpts',
     label: 'Excerpts',
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-    ),
+    icon: <MdArticle size={20} />,
   },
 ]
 
@@ -78,6 +42,24 @@ export default function AdminLayout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const [collapsed, setCollapsed] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('quiz_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending_review')
+      if (count !== null) setPendingCount(count)
+    }
+    fetchPending()
+
+    const channel = supabase.channel('pending_grading_layout')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_attempts' }, fetchPending)
+      .subscribe()
+      
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   const handleLogout = async () => {
     await signOut(auth)
@@ -100,12 +82,7 @@ export default function AdminLayout() {
             onClick={() => setCollapsed(c => !c)}
             aria-label="Toggle sidebar"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {collapsed
-                ? <polyline points="9 18 15 12 9 6"/>
-                : <polyline points="15 18 9 12 15 6"/>}
-            </svg>
+            {collapsed ? <MdChevronRight size={22} /> : <MdChevronLeft size={22} />}
           </button>
         </div>
 
@@ -122,7 +99,12 @@ export default function AdminLayout() {
                 title={collapsed ? item.label : undefined}
               >
                 <span className="ep-nav-icon">{item.icon}</span>
-                <span className="ep-nav-label">{item.label}</span>
+                <span className="ep-nav-label">
+                  {item.label}
+                  {item.label === 'Grading' && pendingCount > 0 && !collapsed && (
+                    <span className="ep-nav-badge">{pendingCount}</span>
+                  )}
+                </span>
                 {active && <span className="ep-nav-indicator" />}
               </Link>
             )
@@ -131,12 +113,7 @@ export default function AdminLayout() {
 
         <div className="ep-sidebar-footer">
           <button className="ep-logout-btn" onClick={handleLogout} title={collapsed ? 'Mag-logout' : undefined}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+            <MdLogout size={20} />
             <span>Mag-logout</span>
           </button>
         </div>
@@ -145,6 +122,7 @@ export default function AdminLayout() {
 
       {/* ── Main ── */}
       <main className="ep-main">
+        <div className="ep-main-glow" aria-hidden="true" />
         <Outlet />
       </main>
 

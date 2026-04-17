@@ -352,8 +352,8 @@ export default function MgaLibro() {
       />
 
       <div className="ml-header">
-        <p className="ml-eyebrow">Koleksyon</p>
-        <h2 className="ml-title">Mga Libro</h2>
+        <p className="ml-eyebrow">Koleksyon ng </p>
+        <h2 className="ml-title">Mga Aklat</h2>
       </div>
 
       <div className="ml-bookcase" ref={caseRef}>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=EB+Garamond:wght@400;500&display=swap');
+
 
 /* ── CSS Variables ── */
 :root {
@@ -59,7 +59,7 @@
       rgba(201, 146, 42, 0.008) 4px
     );
   min-height: 100vh;
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   color: var(--cream);
   overflow-x: hidden;
 }
@@ -137,7 +137,7 @@
 }
 
 .hero-subtitle {
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 1.05rem;
   color: var(--cream-dim);
   font-style: italic;
@@ -333,7 +333,7 @@
 }
 
 .level-text {
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.98rem;
   color: var(--cream-dim);
   line-height: 1.75;
@@ -391,7 +391,7 @@
 }
 
 .footer-intro {
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 1rem;
   color: var(--cream-dim);
   line-height: 1.8;
@@ -459,7 +459,7 @@
 
 /* ── Footer Note ── */
 .footer-note {
-  font-family: var(--font-body);
+  font-family: var(--font-primary);
   font-size: 0.9rem;
   color: var(--cream-dim);
   line-height: 1.8;

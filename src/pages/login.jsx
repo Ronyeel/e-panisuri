@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../API/firebase'
+import { useUI } from '../context/UIContext'
 import './auth.css'
 
 // ─── Cookie helpers ───────────────────────────────────────────────────────────
@@ -55,7 +56,8 @@ function validate({ email, password }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function Login({ onNotify }) {
+export default function Login() {
+  const { notify } = useUI()
   const navigate       = useNavigate()
   const emailRef       = useRef(null)
   const [searchParams] = useSearchParams()
@@ -126,10 +128,7 @@ export default function Login({ onNotify }) {
         ? setCookie(COOKIE_KEY, form.email, COOKIE_DAYS)
         : deleteCookie(COOKIE_KEY)
 
-      onNotify?.({
-        message: `Maligayang pagbabalik, ${user.displayName || 'Mambabasa'}! Matagumpay kang naka-login.`,
-        type: 'success',
-      })
+      notify('Maligayang pagdating! Matagumpay kang nag-login.', 'success')
 
       // All users (including admins) land on the homepage first.
       // Admins navigate to /admin via the floating AdminToggleButton.
@@ -148,15 +147,16 @@ export default function Login({ onNotify }) {
       <div className={`auth-card${shake ? ' auth-card--shake' : ''}`}>
 
         <div className="auth-brand">
-          <div className="auth-brand-name">E-PANISURI</div>
-          <div className="auth-logo-box">LOGO HERE</div>
+          <div className="auth-hero-image"></div>
         </div>
 
         <div className="auth-right">
-          <h1 className="auth-heading">Mag-Login</h1>
-          <p className="auth-greeting">
-            Mabuhay! Inaanyayahan kayo na muling pumasok sa inyong account.
-          </p>
+          <div className="auth-header-center">
+            <h1 className="auth-heading">Mag - Login</h1>
+            <p className="auth-greeting">
+              Mabuhay! Inaanyayahan kaya na muling pumasok sa inyong account
+            </p>
+          </div>
 
           {banner && (
             <div className="auth-error-msg" role="alert" style={{ marginBottom: '1rem' }}>
@@ -213,7 +213,10 @@ export default function Login({ onNotify }) {
             </div>
 
             {/* Remember Me + Forgot Password */}
-            <div className="auth-remember-row">
+            {/* Remember Me + Forgot Password */}
+            <a className="auth-forgot" href="/forgot-password">Nalimutan ang password?</a>
+            
+            <div className="auth-remember-row" style={{ display: 'none' }}>
               <label className="auth-remember-label">
                 <input
                   type="checkbox"
@@ -224,7 +227,6 @@ export default function Login({ onNotify }) {
                 <span className="auth-remember-custom" aria-hidden="true" />
                 <span>Tandaan ako</span>
               </label>
-              <a className="auth-forgot" href="/forgot-password">Nakalimutan ang password?</a>
             </div>
 
             <button

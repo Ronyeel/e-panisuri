@@ -1,17 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@600;700&family=Bebas+Neue&family=Montserrat:wght@400;500&family=Rajdhani:wght@500;600;700&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:       #1a1a1a;
-  --panel:    #161616;
-  --card:     #111111;
-  --gold:     #dea300;
-  --ink:      #e8e8e8;
-  --muted:    #888888;
-  --red:      #ff0000;
-  --input-bg: #2a2a2a;
-  --border:   #3a3a3a;
-  --radius:   6px;
+  --bg:       #eef2f5;
+  --panel:    #000000;
+  --card:     #000000;
+  --gold:     #f5c518;
+  --ink:      #ffffff;
+  --muted:    #a0a0a0;
+  --red:      #ff3333;
+  --input-bg: #222222;
+  --border:   #333333;
+  --radius:   8px;
 }
 
 @keyframes fadein {
@@ -34,13 +34,14 @@
   width: 100%;
   background: var(--bg);
   display: flex;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display);
 }
 
 .auth-card {
   display: flex;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  margin: 0;
   background: var(--card);
   animation: fadein .35s ease both;
   position: relative;
@@ -62,20 +63,36 @@
 }
 
 .auth-brand {
-  width: 38%;
+  width: 50%;
   flex-shrink: 0;
   background: var(--panel);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
-  min-height: 100vh;
+  padding: 1rem;
+}
+.auth-hero-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  background: radial-gradient(circle at 50% 30%, #ff2a00 0%, #1a0500 50%, #000000 80%);
+  position: relative;
+  overflow: hidden;
+}
+.auth-hero-image::after {
+  content: '';
+  position: absolute;
+  bottom: 30%;
+  left: 50%;
+  width: 40px;
+  height: 2px;
+  background: #ff2a00;
+  transform: translateX(-50%) rotate(-25deg);
+  box-shadow: 0 0 12px 2px #ff2a00;
 }
 .auth-brand-name {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1rem, 1.8vw, 1.5rem);
   letter-spacing: 0.25em;
   color: var(--gold);
@@ -91,7 +108,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -101,49 +118,53 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-start;
-  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 5rem);
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
   overflow-y: auto;
-  min-height: 100vh;
 }
 .auth-right > * {
   width: 100%;
   max-width: 460px;
 }
 
+.auth-header-center {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
 .auth-heading {
-  font-family: 'Crimson Text', serif;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--gold);
-  text-transform: uppercase;
-  line-height: 1.1;
-  margin-bottom: 0.25rem;
+  font-family: var(--font-primary);
+  font-size: clamp(1.5rem, 3vw, 1.8rem);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  text-transform: none;
 }
 
 .auth-greeting {
-  font-family: 'Crimson Text', serif;
-  font-size: clamp(0.9rem, 1.15vw, 1.05rem);
-  font-style: italic;
-  color: #b8860b;
-  margin-bottom: 1rem;
+  font-family: var(--font-primary);
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  color: var(--muted);
   line-height: 1.5;
 }
 
 .auth-section-label {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(0.75rem, 1.1vw, 0.9rem);
-  letter-spacing: 0.22em;
-  color: var(--gold);
-  border-bottom: 1px solid var(--border);
+  font-family: var(--font-primary);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--gold);
   padding-bottom: 0.5rem;
+  margin-top: 1.5rem;
   margin-bottom: 1.4rem;
 }
 
 .auth-sub {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.82rem;
   color: var(--muted);
 }
@@ -151,7 +172,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1.2rem;
 }
 
 .auth-row {
@@ -163,14 +184,14 @@
 .auth-field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
 }
 
 .auth-label {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(0.7rem, 1vw, 0.85rem);
-  letter-spacing: 0.18em;
-  color: var(--gold);
+  font-family: var(--font-primary);
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  font-weight: 500;
+  color: var(--ink);
 }
 .auth-label-row {
   display: flex;
@@ -194,20 +215,20 @@
 }
 .auth-input {
   width: 100%;
-  padding: 0.65rem 2.4rem 0.65rem 2.3rem;
+  padding: 0.75rem 2.4rem 0.75rem 2.3rem;
   background: var(--input-bg);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   font-size: clamp(0.8rem, 1vw, 0.92rem);
   font-weight: 500;
   color: var(--ink);
   outline: none;
-  transition: border-color .18s, background .18s;
+  transition: background .18s, box-shadow .18s;
 }
 .auth-input::placeholder { color: var(--muted); }
-.auth-input:focus        { border-color: var(--gold); background: #303030; }
-.auth-input[aria-invalid="true"] { border-color: var(--red); }
+.auth-input:focus        { background: #303030; box-shadow: inset 0 0 0 1px var(--gold); }
+.auth-input[aria-invalid="true"] { box-shadow: inset 0 0 0 1px var(--red); }
 
 .auth-toggle-pass {
   position: absolute;
@@ -226,7 +247,7 @@
 .auth-toggle-pass:hover { color: var(--gold); }
 
 .auth-error-msg {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -234,15 +255,16 @@
 }
 
 .auth-forgot {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(0.65rem, 0.9vw, 0.8rem);
-  letter-spacing: 0.1em;
+  font-family: var(--font-primary);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  font-weight: 500;
   color: var(--gold);
-  text-decoration: none;
+  text-decoration: underline;
   display: block;
-  text-align: right;
+  text-align: left;
+  margin-top: 0.5rem;
 }
-.auth-forgot:hover { opacity: 0.7; }
+.auth-forgot:hover { opacity: 0.8; }
 
 .auth-strength-wrap {
   display: flex;
@@ -267,7 +289,7 @@
 .auth-strength--3 .auth-strength-seg { background: #cccc00; }
 .auth-strength--4 .auth-strength-seg { background: #44cc44; }
 .auth-strength-label {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   min-width: 76px;
@@ -290,7 +312,7 @@
   flex-shrink: 0;
 }
 .auth-terms-text {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.62rem, 0.85vw, 0.72rem);
   color: var(--muted);
   line-height: 1.5;
@@ -303,22 +325,24 @@
 .auth-terms-link:hover { text-decoration: underline; }
 
 .auth-submit {
-  width: 100%;
-  padding: 0.8rem;
-  margin-top: 0.3rem;
-  background: var(--gold);
-  color: #111;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
-  letter-spacing: 0.2em;
+  width: auto;
+  min-width: 180px;
+  margin: 2rem auto 1rem auto;
+  padding: 0.8rem 2rem;
+  background: linear-gradient(135deg, #fceb8c 0%, #f5c518 100%);
+  color: #000;
+  font-family: var(--font-primary);
+  font-size: clamp(0.9rem, 1vw, 1rem);
+  font-weight: 700;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  transition: background .18s, transform .12s;
+  transition: transform .12s, box-shadow .18s;
+  box-shadow: 0 4px 14px rgba(245, 197, 24, 0.25);
 }
 .auth-submit:hover:not(:disabled) { background: #f0b000; transform: translateY(-1px); }
 .auth-submit:active                { transform: scale(0.98); }
@@ -335,7 +359,7 @@
 
 .auth-switch {
   text-align: center;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.65rem, 0.85vw, 0.75rem);
   font-weight: 600;
   color: var(--muted);
@@ -355,7 +379,7 @@
   left: 1.5rem;
   background: none;
   border: none;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.65rem, 0.9vw, 0.8rem);
   letter-spacing: 0.15em;
   color: var(--muted);
@@ -400,6 +424,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.25rem;
+  margin-top: 1rem;
 }
 
 .auth-remember-label {

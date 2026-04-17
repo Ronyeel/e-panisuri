@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { auth, db } from '../API/firebase'
-import Notification from '../components/notification' // adjust path as needed
+import { useUI } from '../context/UIContext'
+import { MdSearch, MdGroup, MdAdminPanelSettings, MdPerson } from 'react-icons/md'
 
 function maskEmail(email = '') {
   const [local, domain] = email.split('@')
@@ -25,11 +26,11 @@ const PAPEL_ACCENTS = {
 }
 
 export default function AdminDashboard() {
+  const { notify, confirm } = useUI()
   const [users,    setUsers]   = useState([])
   const [search,   setSearch]  = useState('')
   const [loading,  setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
-  const [notify,   setNotify]  = useState(null) // { message, type }
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -39,32 +40,31 @@ export default function AdminDashboard() {
     return () => unsub()
   }, [])
 
-  const showNotif = (message, type = 'success') => {
-    setNotify({ message, type })
-  }
-
-  // Called by Notification when it finishes closing
-  const clearNotif = () => setNotify(null)
-
   const toggleRole = async (uid, current) => {
     try {
       await updateDoc(doc(db, 'users', uid), {
         role: current === 'admin' ? 'user' : 'admin',
       })
-      showNotif('Role updated successfully.')
+      notify('Role updated successfully.', 'success')
     } catch (err) {
-      showNotif(`Failed to update role: ${err.message}`, 'error')
+      notify(`Failed to update role: ${err.message}`, 'error')
     }
   }
 
   const deleteUser = async (uid, username) => {
-    if (!window.confirm(`Tanggalin si "${username}"?\n\nMatatanggal ang account sa database.`)) return
+    const ok = await confirm({
+      title:        `Tanggalin si "${username}"?`,
+      body:         'Matatanggal ang account sa database. Hindi ito maibabalik.',
+      confirmLabel: 'Tanggalin',
+      danger:       true,
+    })
+    if (!ok) return
     setDeleting(uid)
     try {
       await deleteDoc(doc(db, 'users', uid))
-      showNotif(`Si "${username}" ay matagumpay na natanggal.`)
+      notify(`Si "${username}" ay matagumpay na natanggal.`, 'success')
     } catch (err) {
-      showNotif(`Hindi ma-delete: ${err.message}`, 'error')
+      notify(`Hindi ma-delete: ${err.message}`, 'error')
     } finally {
       setDeleting(null)
     }
@@ -89,15 +89,6 @@ export default function AdminDashboard() {
   return (
     <div className="ep-page">
 
-      {/* Notification */}
-      {notify && (
-        <Notification
-          message={notify.message}
-          type={notify.type}
-          onClose={clearNotif}
-        />
-      )}
-
       {/* Header */}
       <div className="ep-page-header">
         <div>
@@ -113,9 +104,9 @@ export default function AdminDashboard() {
       {/* Core stats */}
       <div className="ep-stats-grid">
         {[
-          { label: 'Total Users',   val: users.length, icon: '', accent: '#6c63ff' },
-          { label: 'Admins',        val: admins,        icon: '', accent: '#a89cff' },
-          { label: 'Regular Users', val: regular,       icon: '', accent: '#22d3a5' },
+          { label: 'Total Users',   val: users.length, icon: <MdGroup />, accent: '#6c63ff' },
+          { label: 'Admins',        val: admins,        icon: <MdAdminPanelSettings />, accent: '#a89cff' },
+          { label: 'Regular Users', val: regular,       icon: <MdPerson />, accent: '#22d3a5' },
         ].map(s => (
           <div className="ep-stat-card" key={s.label} style={{ '--accent': s.accent }}>
             <div className="ep-stat-icon">{s.icon}</div>
@@ -144,11 +135,7 @@ export default function AdminDashboard() {
         <div className="ep-card-header">
           <h2 className="ep-card-title">User Management</h2>
           <div className="ep-search-wrap">
-            <svg className="ep-search-icon" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <MdSearch size={16} className="ep-search-icon" />
             <input
               className="ep-search"
               type="text"

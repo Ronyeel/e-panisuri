@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700;800&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
  
 /* ── Variables ────────────────────────────────────────────────── */
 :root {
@@ -11,6 +11,16 @@
   --border:  #2a2a2a;
   --text:    #e4dccf;
   --muted:   #7a7060;
+
+  /* Typography */
+  --font-primary: 'Crimson Text', serif;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-accent: 'Playfair Display', serif;
+  
+  /* Fluid Layout Components */
+  --navbar-h:      clamp(60px, 6vh, 70px);
+  --sidebar-w:     clamp(210px, 18vw, 260px);
+  --sidebar-w-min: clamp(60px, 5vw, 80px);
  
   /* Fluid spacing scale */
   --space-xs:  clamp(0.5rem,  1vw,  0.75rem);
@@ -29,8 +39,10 @@
  
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
  
-body {
+html, body {
   background: var(--black);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  width: 100%;
 }

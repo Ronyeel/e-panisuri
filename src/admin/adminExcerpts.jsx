@@ -1,6 +1,8 @@
 // adminExcerpts.jsx
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../API/supabase'
+import { MdAdd, MdSearch, MdArticle, MdPictureAsPdf, MdImage } from 'react-icons/md'
+import { useUI } from '../context/UIContext'
 
 const EMPTY_FORM = {
   bookTitle: '',
@@ -13,6 +15,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminExcerpts() {
+  const { notify, confirm } = useUI()
   const [items,   setItems]   = useState([])
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
@@ -99,10 +102,20 @@ export default function AdminExcerpts() {
 
   /* delete */
   const handleDelete = async (id, title) => {
-    if (!window.confirm(`Tanggalin ang "${title}"?`)) return
+    const ok = await confirm({
+      title:        `Tanggalin ang "${title}"?`,
+      body:         'Permanente itong matatanggal. Hindi ito maibabalik.',
+      confirmLabel: 'Tanggalin',
+      danger:       true,
+    })
+    if (!ok) return
     const { error } = await supabase.from('excerpts').delete().eq('id', id)
-    if (error) { alert('Hindi matanggal. Subukan ulit.') }
-    else { setItems(prev => prev.filter(i => i.id !== id)) }
+    if (error) {
+      notify('Hindi matanggal. Subukan ulit.', 'error')
+    } else {
+      setItems(prev => prev.filter(i => i.id !== id))
+      notify(`"${title}" ay matagumpay na natanggal.`, 'success')
+    }
   }
 
   const filtered = items.filter(i =>
@@ -121,8 +134,7 @@ export default function AdminExcerpts() {
           <h1 className="ep-page-title">Excerpts</h1>
         </div>
         <button className="ep-btn ep-btn--primary" onClick={openAdd}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <MdAdd size={16} />
           Magdagdag
         </button>
       </div>
@@ -130,9 +142,9 @@ export default function AdminExcerpts() {
       {/* Stats */}
       <div className="ep-stats-grid">
         {[
-          { label: 'Kabuuan',   val: items.length,                         icon: '', accent: '#6c63ff' },
-          { label: 'May PDF',   val: items.filter(i => i.pdf).length,      icon: '', accent: '#22d3a5' },
-          { label: 'May Cover', val: items.filter(i => i.cover).length,    icon: '', accent: '#f5b942' },
+          { label: 'Kabuuan',   val: items.length,                         icon: <MdArticle />, accent: '#6c63ff' },
+          { label: 'May PDF',   val: items.filter(i => i.pdf).length,      icon: <MdPictureAsPdf />, accent: '#22d3a5' },
+          { label: 'May Cover', val: items.filter(i => i.cover).length,    icon: <MdImage />, accent: '#f5b942' },
         ].map(s => (
           <div className="ep-stat-card" key={s.label} style={{ '--accent': s.accent }}>
             <div className="ep-stat-icon">{s.icon}</div>
@@ -149,10 +161,7 @@ export default function AdminExcerpts() {
         <div className="ep-card-header">
           <h2 className="ep-card-title">Lahat ng Sipi</h2>
           <div className="ep-search-wrap">
-            <svg className="ep-search-icon" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <MdSearch size={16} className="ep-search-icon" />
             <input
               className="ep-search"
               placeholder="Hanapin ang sipi…"

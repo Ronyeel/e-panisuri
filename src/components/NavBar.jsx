@@ -12,7 +12,7 @@ import {
 
 export const navLinks = [
   { label: 'Home',                  to: '/' },
-  { label: 'Mga Libro',             to: '/mga-libro' },
+  { label: 'Mga Aklat',             to: '/mga-libro' },
   { label: 'Pagsusuri',             to: '/pagsusuri' },
   { label: 'Teoryang Pampanitikan', to: '/teorya' },
   { label: 'Bagong Pamantayan',     to: '/bagong-pamantayan' },

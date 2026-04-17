@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;600;700;800&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
 
 /* ── Variables ────────────────────────────────────────────────── */
 :root {
@@ -66,7 +66,7 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-bottom: var(--space-lg);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: var(--text-md);
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -96,7 +96,7 @@
 }
 
 .hero-featured-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -106,7 +106,7 @@
 }
 
 .hero-book-title {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 5.5vw, 5.5rem);
   font-weight: 400;
   line-height: 0.92;
@@ -142,7 +142,7 @@
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   flex-shrink: 0;
 }
 .hero-author-by {
@@ -228,7 +228,7 @@
 }
 
 .quote-opener {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-accent);
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 0.5;
   color: var(--gold);
@@ -238,7 +238,7 @@
 }
 
 .hero-quote {
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-primary);
   font-size: var(--text-md);
   font-style: italic;
   line-height: 1.75;
@@ -268,7 +268,7 @@
   background: linear-gradient(180deg, #ffc34d 0%, #f9f295 49%, #ffc34d 93%);
   color: #be0e15;
   border: 1.5px solid #c9933a;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-accent);
   font-size: clamp(0.78rem, 1.5vw, 0.9rem);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -295,7 +295,7 @@
   background: var(--red);
   color: var(--gold);
   border: 1.5px solid #8a0e1a;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-accent);
   font-size: clamp(0.78rem, 1.5vw, 0.9rem);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -420,7 +420,7 @@
 }
 
 .school-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.75rem, 2.5vw, 1.4rem);
   font-weight: 800;
   letter-spacing: 0.35em;
@@ -429,7 +429,7 @@
 }
 
 .school-headline {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-accent);
   font-size: clamp(1.6rem, 4vw, 3.2rem);
   font-weight: 900;
   line-height: 1.15;
@@ -485,7 +485,7 @@
 }
 
 .cta-eyebrow {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.25em;
@@ -498,7 +498,7 @@
   padding: clamp(0.55rem, 1.5vw, 0.75rem) clamp(1.5rem, 4vw, 2.75rem);
   background: var(--black);
   color: var(--gold);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.75rem, 1.5vw, 0.82rem);
   font-weight: 700;
   letter-spacing: 0.2em;
