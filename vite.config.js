@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     sitemap({
-      hostname: 'https://panuri.online'
+      hostname: 'https://www.panuri.online'
     })
   ],
 
