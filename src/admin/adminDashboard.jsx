@@ -33,11 +33,22 @@ export default function AdminDashboard() {
   const [deleting, setDeleting] = useState(null)
   const [activeMenuId, setActiveMenuId] = useState(null)
 
+  const [error,   setError]   = useState(null)
+
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'users'), (snap) => {
-      setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-      setLoading(false)
-    })
+    const unsub = onSnapshot(collection(db, 'users'), 
+      (snap) => {
+        setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        setLoading(false)
+        setError(null)
+      },
+      (err) => {
+        console.error('[AdminDashboard] Error loading users:', err)
+        setError(err.message || 'Missing or insufficient permissions.')
+        setLoading(false)
+        notify(`Hindi ma-load ang mga user: ${err.message}`, 'error')
+      }
+    )
     return () => unsub()
   }, [])
 
@@ -151,6 +162,50 @@ export default function AdminDashboard() {
           <div className="ep-loading">
             <div className="ep-spinner" />
             <span>Naglo-load…</span>
+          </div>
+        ) : error ? (
+          <div className="ep-loading" style={{ flexDirection: 'column', gap: '16px', padding: '40px 20px', color: '#ff5f6d' }}>
+            <span style={{ fontSize: '32px' }}>⚠️</span>
+            <strong style={{ fontSize: '18px', color: '#fff' }}>Access Denied / Permission Error</strong>
+            <p style={{ color: '#aaa', fontSize: '13.5px', maxWidth: '480px', margin: '0 auto', lineHeight: '1.6', textAlign: 'center' }}>
+              Hindi ma-load ang listahan ng mga users: {error}
+            </p>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '20px',
+              textAlign: 'left',
+              fontSize: '13px',
+              color: '#bbb',
+              maxWidth: '520px',
+              marginTop: '10px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            }}>
+              <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#f5b942', fontSize: '14px' }}>Paano ito Ayusin:</p>
+              <ol style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.8' }}>
+                <li>Pumunta sa iyong <strong>Firebase Console</strong>.</li>
+                <li>Magtungo sa <strong>Firestore Database</strong> ➔ <strong>users</strong> collection.</li>
+                <li>Hanapin ang user document na may ID: <br/>
+                  <code style={{ 
+                    background: 'rgba(0,0,0,0.4)', 
+                    padding: '4px 8px', 
+                    borderRadius: '6px', 
+                    color: '#f5b942', 
+                    fontFamily: 'monospace',
+                    display: 'inline-block',
+                    marginTop: '4px',
+                    marginBottom: '4px',
+                    wordBreak: 'break-all',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                  }}>
+                    {auth.currentUser?.uid}
+                  </code> <br/>
+                  (Ito ang ID ng iyong <code>{auth.currentUser?.email}</code> account).
+                </li>
+                <li>Siguraduhing ang field na <strong><code>role</code></strong> ay may value na <strong><code>"admin"</code></strong> (kung ito ay <code>"user"</code>, palitan ito ng <code>"admin"</code>).</li>
+              </ol>
+            </div>
           </div>
         ) : (
           <div className="ep-table-wrap">

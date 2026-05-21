@@ -28,17 +28,51 @@ export default function AdminToggleButton() {
   // ── Check if current user is admin ────────────────────────────────────────
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) { setIsAdmin(false); setVisible(false); return }
-      try {
-        const snap = await getDoc(doc(db, 'users', user.uid))
-        const role = snap.exists() ? snap.data()?.role : 'user'
-        setIsAdmin(role === 'admin')
-        setVisible(role === 'admin')
-      } catch {
-        setIsAdmin(false); setVisible(false)
+      if (!user) {
+        console.log("[AdminToggle] No user is currently logged in.");
+        setIsAdmin(false);
+        setVisible(false);
+        return;
       }
-    })
-    return () => unsub()
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        let role = snap.exists() ? snap.data()?.role : 'user';
+
+        // ── Auto-upgrade / self-heal for admin@panuri.com ─────────────────────
+        if (user.email === 'admin@panuri.com') {
+          role = 'admin';
+          if (!snap.exists() || snap.data()?.role !== 'admin') {
+            const { setDoc } = await import('firebase/firestore'); // ensure setDoc is imported
+            await setDoc(doc(db, 'users', user.uid), {
+              username: 'admin',
+              email: user.email,
+              role: 'admin',
+              papel: 'admin',
+              paaralan: 'PANURI System',
+              kurso: 'PANURI System',
+              createdAt: snap.exists() ? (snap.data()?.createdAt || new Date()) : new Date()
+            }, { merge: true });
+            console.log("[AdminToggle] Automatically updated admin@panuri.com to admin role in Firestore.");
+          }
+        }
+
+        console.log(`[AdminToggle] Logged in user: ${user.email}, UID: ${user.uid}, Role in Firestore: "${role}"`);
+        setIsAdmin(role === 'admin');
+        setVisible(role === 'admin');
+      } catch (err) {
+        // Fallback for admin@panuri.com if Firestore fetch fails
+        if (user.email === 'admin@panuri.com') {
+          console.log("[AdminToggle] Firestore fetch failed but automatically allowed admin@panuri.com as Admin.");
+          setIsAdmin(true);
+          setVisible(true);
+        } else {
+          console.error("[AdminToggle] Error fetching user role from Firestore:", err);
+          setIsAdmin(false);
+          setVisible(false);
+        }
+      }
+    });
+    return () => unsub();
   }, [])
 
   if (!isAdmin) return null
