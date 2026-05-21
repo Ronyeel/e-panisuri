@@ -108,10 +108,10 @@ function htmlToRecord(html, pageUrl, siteOrigin) {
 }
 
 // ── Live site spider ──────────────────────────────────────────────────────────
-// Fetches https://panuri.online/ and follows every internal link it finds.
+// Fetches https://www.panuri.online/ and follows every internal link it finds.
 // Respects a concurrency limit and a max-pages cap so it never runs forever.
 
-const SITE_URL      = process.env.SITE_URL ?? 'https://panuri.online/'
+const SITE_URL      = process.env.SITE_URL ?? 'https://www.panuri.online/'
 const MAX_PAGES     = 200   // safety cap
 const CONCURRENCY   = 5     // parallel fetches at a time
 const FETCH_TIMEOUT = 10000 // ms per page
